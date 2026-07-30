@@ -1,0 +1,1202 @@
+[
+  {
+    "id": 1,
+    "nivel": 1,
+    "pregunta": "¿Cuál es la capital de Colombia?",
+    "opciones": {
+      "A": "Medellín",
+      "B": "Bogotá",
+      "C": "Cali",
+      "D": "Cartagena"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 2,
+    "nivel": 1,
+    "pregunta": "¿Cuántos días tiene una semana?",
+    "opciones": {
+      "A": "5",
+      "B": "6",
+      "C": "7",
+      "D": "8"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 3,
+    "nivel": 1,
+    "pregunta": "¿En qué planeta vivimos?",
+    "opciones": {
+      "A": "Marte",
+      "B": "Venus",
+      "C": "Tierra",
+      "D": "Júpiter"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 4,
+    "nivel": 1,
+    "pregunta": "¿Cuánto es 2 + 2?",
+    "opciones": {
+      "A": "3",
+      "B": "4",
+      "C": "5",
+      "D": "22"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 5,
+    "nivel": 1,
+    "pregunta": "¿Cuál es el idioma oficial de Colombia?",
+    "opciones": {
+      "A": "Inglés",
+      "B": "Portugués",
+      "C": "Español",
+      "D": "Francés"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 6,
+    "nivel": 1,
+    "pregunta": "¿Cuál es el continente más grande del mundo?",
+    "opciones": {
+      "A": "África",
+      "B": "Asia",
+      "C": "Europa",
+      "D": "Oceanía"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 7,
+    "nivel": 1,
+    "pregunta": "¿Qué animal es conocido como \"el rey de la selva\"?",
+    "opciones": {
+      "A": "Tigre",
+      "B": "León",
+      "C": "Elefante",
+      "D": "Leopardo"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 8,
+    "nivel": 1,
+    "pregunta": "¿Qué color resulta de mezclar azul y amarillo?",
+    "opciones": {
+      "A": "Verde",
+      "B": "Morado",
+      "C": "Naranja",
+      "D": "Café"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 9,
+    "nivel": 1,
+    "pregunta": "¿Cuántos meses tiene un año?",
+    "opciones": {
+      "A": "10",
+      "B": "11",
+      "C": "12",
+      "D": "13"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 10,
+    "nivel": 1,
+    "pregunta": "¿Cuál es el río más largo de Colombia?",
+    "opciones": {
+      "A": "Río Cauca",
+      "B": "Río Magdalena",
+      "C": "Río Atrato",
+      "D": "Río Meta"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 11,
+    "nivel": 1,
+    "pregunta": "¿Qué instrumento se usa para medir la temperatura?",
+    "opciones": {
+      "A": "Barómetro",
+      "B": "Termómetro",
+      "C": "Altímetro",
+      "D": "Manómetro"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 12,
+    "nivel": 1,
+    "pregunta": "¿Cuál es el océano más grande del mundo?",
+    "opciones": {
+      "A": "Atlántico",
+      "B": "Índico",
+      "C": "Pacífico",
+      "D": "Ártico"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 13,
+    "nivel": 1,
+    "pregunta": "¿Cuántas patas tiene una araña?",
+    "opciones": {
+      "A": "6",
+      "B": "8",
+      "C": "10",
+      "D": "4"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 14,
+    "nivel": 1,
+    "pregunta": "¿En qué continente está ubicada Colombia?",
+    "opciones": {
+      "A": "Europa",
+      "B": "América",
+      "C": "África",
+      "D": "Asia"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 15,
+    "nivel": 1,
+    "pregunta": "¿Cuál es la moneda oficial de Colombia?",
+    "opciones": {
+      "A": "Peso colombiano",
+      "B": "Dólar",
+      "C": "Sol",
+      "D": "Bolívar"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 16,
+    "nivel": 1,
+    "pregunta": "Además de agua y tierra, ¿qué necesita una planta para crecer?",
+    "opciones": {
+      "A": "Luz solar",
+      "B": "Sal",
+      "C": "Azúcar",
+      "D": "Hielo"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 17,
+    "nivel": 1,
+    "pregunta": "¿Cuál es el deporte más popular en Colombia?",
+    "opciones": {
+      "A": "Baloncesto",
+      "B": "Fútbol",
+      "C": "Béisbol",
+      "D": "Tenis"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 18,
+    "nivel": 1,
+    "pregunta": "¿Cuántos colores tiene el arcoíris?",
+    "opciones": {
+      "A": "5",
+      "B": "6",
+      "C": "7",
+      "D": "8"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 19,
+    "nivel": 1,
+    "pregunta": "¿Qué órgano bombea la sangre en el cuerpo humano?",
+    "opciones": {
+      "A": "Pulmón",
+      "B": "Hígado",
+      "C": "Corazón",
+      "D": "Riñón"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 20,
+    "nivel": 1,
+    "pregunta": "¿Cuál es la capital de Francia?",
+    "opciones": {
+      "A": "Londres",
+      "B": "Madrid",
+      "C": "Roma",
+      "D": "París"
+    },
+    "respuestaCorrecta": "D"
+  },
+  {
+    "id": 21,
+    "nivel": 2,
+    "pregunta": "¿Quién pintó la Mona Lisa?",
+    "opciones": {
+      "A": "Pablo Picasso",
+      "B": "Leonardo da Vinci",
+      "C": "Vincent van Gogh",
+      "D": "Miguel Ángel"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 22,
+    "nivel": 2,
+    "pregunta": "¿Cuál es el hueso más largo del cuerpo humano?",
+    "opciones": {
+      "A": "Húmero",
+      "B": "Fémur",
+      "C": "Tibia",
+      "D": "Radio"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 23,
+    "nivel": 2,
+    "pregunta": "¿En qué año se dio el Grito de Independencia de Colombia?",
+    "opciones": {
+      "A": "1810",
+      "B": "1819",
+      "C": "1821",
+      "D": "1830"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 24,
+    "nivel": 2,
+    "pregunta": "¿Cuál es el desierto cálido más grande del mundo?",
+    "opciones": {
+      "A": "Gobi",
+      "B": "Kalahari",
+      "C": "Sahara",
+      "D": "Atacama"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 25,
+    "nivel": 2,
+    "pregunta": "¿Cuántos huesos tiene el cuerpo humano adulto?",
+    "opciones": {
+      "A": "186",
+      "B": "196",
+      "C": "206",
+      "D": "216"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 26,
+    "nivel": 2,
+    "pregunta": "¿Cuál es la capital de España?",
+    "opciones": {
+      "A": "Barcelona",
+      "B": "Madrid",
+      "C": "Sevilla",
+      "D": "Valencia"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 27,
+    "nivel": 2,
+    "pregunta": "¿Qué gas es esencial para que los humanos podamos respirar?",
+    "opciones": {
+      "A": "Dióxido de carbono",
+      "B": "Nitrógeno",
+      "C": "Oxígeno",
+      "D": "Hidrógeno"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 28,
+    "nivel": 2,
+    "pregunta": "¿Quién escribió \"Cien años de soledad\"?",
+    "opciones": {
+      "A": "Mario Vargas Llosa",
+      "B": "Gabriel García Márquez",
+      "C": "Jorge Luis Borges",
+      "D": "Pablo Neruda"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 29,
+    "nivel": 2,
+    "pregunta": "¿Cuál es el pico más alto de Colombia?",
+    "opciones": {
+      "A": "Nevado del Ruiz",
+      "B": "Pico Cristóbal Colón",
+      "C": "Nevado del Huila",
+      "D": "Nevado del Tolima"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 30,
+    "nivel": 2,
+    "pregunta": "¿Cuántos jugadores tiene un equipo de fútbol en la cancha?",
+    "opciones": {
+      "A": "9",
+      "B": "10",
+      "C": "11",
+      "D": "12"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 31,
+    "nivel": 2,
+    "pregunta": "¿Cuál es el metal que es líquido a temperatura ambiente?",
+    "opciones": {
+      "A": "Plomo",
+      "B": "Mercurio",
+      "C": "Estaño",
+      "D": "Zinc"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 32,
+    "nivel": 2,
+    "pregunta": "¿En qué país se encuentra la Torre Eiffel?",
+    "opciones": {
+      "A": "Italia",
+      "B": "España",
+      "C": "Francia",
+      "D": "Alemania"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 33,
+    "nivel": 2,
+    "pregunta": "¿Cuál es la capital de Estados Unidos?",
+    "opciones": {
+      "A": "Nueva York",
+      "B": "Los Ángeles",
+      "C": "Washington D.C.",
+      "D": "Chicago"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 34,
+    "nivel": 2,
+    "pregunta": "¿Qué figura geométrica tiene 3 lados?",
+    "opciones": {
+      "A": "Cuadrado",
+      "B": "Triángulo",
+      "C": "Pentágono",
+      "D": "Círculo"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 35,
+    "nivel": 2,
+    "pregunta": "¿Cuál es el animal terrestre más grande del mundo?",
+    "opciones": {
+      "A": "Rinoceronte",
+      "B": "Hipopótamo",
+      "C": "Elefante africano",
+      "D": "Jirafa"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 36,
+    "nivel": 2,
+    "pregunta": "¿Cómo se llama la línea imaginaria que divide a la Tierra en hemisferio norte y sur?",
+    "opciones": {
+      "A": "Trópico de Cáncer",
+      "B": "Ecuador",
+      "C": "Meridiano de Greenwich",
+      "D": "Trópico de Capricornio"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 37,
+    "nivel": 2,
+    "pregunta": "¿Quién es conocido como \"El Libertador\"?",
+    "opciones": {
+      "A": "Francisco de Paula Santander",
+      "B": "Simón Bolívar",
+      "C": "Antonio Nariño",
+      "D": "José de San Martín"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 38,
+    "nivel": 2,
+    "pregunta": "¿Cuántas cuerdas tiene una guitarra clásica?",
+    "opciones": {
+      "A": "4",
+      "B": "5",
+      "C": "6",
+      "D": "7"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 39,
+    "nivel": 2,
+    "pregunta": "¿Cuánto es 9 x 9?",
+    "opciones": {
+      "A": "72",
+      "B": "81",
+      "C": "90",
+      "D": "99"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 40,
+    "nivel": 2,
+    "pregunta": "¿Qué mar baña las costas de la región Caribe de Colombia?",
+    "opciones": {
+      "A": "Mar Caribe",
+      "B": "Océano Pacífico",
+      "C": "Mar Mediterráneo",
+      "D": "Mar Rojo"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 41,
+    "nivel": 3,
+    "pregunta": "¿En qué año llegó Cristóbal Colón a América?",
+    "opciones": {
+      "A": "1492",
+      "B": "1500",
+      "C": "1476",
+      "D": "1510"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 42,
+    "nivel": 3,
+    "pregunta": "¿Cuál es la fórmula química del agua?",
+    "opciones": {
+      "A": "CO2",
+      "B": "H2O",
+      "C": "O2",
+      "D": "NaCl"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 43,
+    "nivel": 3,
+    "pregunta": "¿Quién compuso la Novena Sinfonía?",
+    "opciones": {
+      "A": "Wolfgang Amadeus Mozart",
+      "B": "Ludwig van Beethoven",
+      "C": "Johann Sebastian Bach",
+      "D": "Frédéric Chopin"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 44,
+    "nivel": 3,
+    "pregunta": "¿Cuál es el país más grande del mundo por territorio?",
+    "opciones": {
+      "A": "Canadá",
+      "B": "China",
+      "C": "Rusia",
+      "D": "Estados Unidos"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 45,
+    "nivel": 3,
+    "pregunta": "¿Qué escritor colombiano ganó el Premio Nobel de Literatura en 1982?",
+    "opciones": {
+      "A": "Álvaro Mutis",
+      "B": "Gabriel García Márquez",
+      "C": "Jorge Isaacs",
+      "D": "José Eustasio Rivera"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 46,
+    "nivel": 3,
+    "pregunta": "¿Cuál es la capital de Brasil?",
+    "opciones": {
+      "A": "Río de Janeiro",
+      "B": "São Paulo",
+      "C": "Brasilia",
+      "D": "Salvador"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 47,
+    "nivel": 3,
+    "pregunta": "¿Cuántos departamentos tiene Colombia?",
+    "opciones": {
+      "A": "30",
+      "B": "31",
+      "C": "32",
+      "D": "33"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 48,
+    "nivel": 3,
+    "pregunta": "¿Cómo se llama el proceso mediante el cual las plantas producen su alimento usando luz solar?",
+    "opciones": {
+      "A": "Respiración",
+      "B": "Fotosíntesis",
+      "C": "Digestión",
+      "D": "Transpiración"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 49,
+    "nivel": 3,
+    "pregunta": "¿Quién pintó \"Las Meninas\"?",
+    "opciones": {
+      "A": "Diego Velázquez",
+      "B": "Francisco de Goya",
+      "C": "Salvador Dalí",
+      "D": "El Greco"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 50,
+    "nivel": 3,
+    "pregunta": "¿En qué año se promulgó la Constitución Política de Colombia vigente?",
+    "opciones": {
+      "A": "1986",
+      "B": "1991",
+      "C": "1995",
+      "D": "2001"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 51,
+    "nivel": 3,
+    "pregunta": "¿Qué elemento químico tiene el símbolo \"Fe\"?",
+    "opciones": {
+      "A": "Flúor",
+      "B": "Hierro",
+      "C": "Francio",
+      "D": "Fermio"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 52,
+    "nivel": 3,
+    "pregunta": "¿Qué volcán colombiano causó la tragedia de Armero en 1985?",
+    "opciones": {
+      "A": "Galeras",
+      "B": "Nevado del Ruiz",
+      "C": "Puracé",
+      "D": "Cerro Machín"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 53,
+    "nivel": 3,
+    "pregunta": "¿Cuántos lados tiene un hexágono?",
+    "opciones": {
+      "A": "5",
+      "B": "6",
+      "C": "7",
+      "D": "8"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 54,
+    "nivel": 3,
+    "pregunta": "¿Cuál es la capital de Japón?",
+    "opciones": {
+      "A": "Kioto",
+      "B": "Osaka",
+      "C": "Tokio",
+      "D": "Yokohama"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 55,
+    "nivel": 3,
+    "pregunta": "¿Quién fue el primer presidente de la Gran Colombia?",
+    "opciones": {
+      "A": "Francisco de Paula Santander",
+      "B": "Simón Bolívar",
+      "C": "Antonio Nariño",
+      "D": "José María Córdova"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 56,
+    "nivel": 3,
+    "pregunta": "¿Cuál es la raíz cuadrada de 144?",
+    "opciones": {
+      "A": "11",
+      "B": "12",
+      "C": "13",
+      "D": "14"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 57,
+    "nivel": 3,
+    "pregunta": "¿Cuál es el río más caudaloso del mundo?",
+    "opciones": {
+      "A": "Río Nilo",
+      "B": "Río Amazonas",
+      "C": "Río Yangtsé",
+      "D": "Río Misisipi"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 58,
+    "nivel": 3,
+    "pregunta": "¿Qué artista colombiano es famoso por sus pinturas y esculturas de figuras voluminosas?",
+    "opciones": {
+      "A": "Alejandro Obregón",
+      "B": "Fernando Botero",
+      "C": "Enrique Grau",
+      "D": "Débora Arango"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 59,
+    "nivel": 3,
+    "pregunta": "¿Cuál es la capital de Italia?",
+    "opciones": {
+      "A": "Milán",
+      "B": "Nápoles",
+      "C": "Roma",
+      "D": "Venecia"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 60,
+    "nivel": 3,
+    "pregunta": "¿Cuántas cuerdas vocales tiene el ser humano?",
+    "opciones": {
+      "A": "1",
+      "B": "2",
+      "C": "3",
+      "D": "4"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 61,
+    "nivel": 4,
+    "pregunta": "¿En qué batalla de 1819 se selló la independencia de Colombia?",
+    "opciones": {
+      "A": "Batalla de Pichincha",
+      "B": "Batalla de Boyacá",
+      "C": "Batalla de Carabobo",
+      "D": "Batalla de Ayacucho"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 62,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la unidad básica de la herencia genética?",
+    "opciones": {
+      "A": "Cromosoma",
+      "B": "Gen",
+      "C": "Célula",
+      "D": "Núcleo"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 63,
+    "nivel": 4,
+    "pregunta": "¿Quién escribió \"Don Quijote de la Mancha\"?",
+    "opciones": {
+      "A": "Lope de Vega",
+      "B": "Miguel de Cervantes",
+      "C": "Federico García Lorca",
+      "D": "Calderón de la Barca"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 64,
+    "nivel": 4,
+    "pregunta": "¿Cuál es el hueso más pequeño del cuerpo humano?",
+    "opciones": {
+      "A": "Martillo",
+      "B": "Yunque",
+      "C": "Estribo",
+      "D": "Rótula"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 65,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la capital de Australia?",
+    "opciones": {
+      "A": "Sídney",
+      "B": "Melbourne",
+      "C": "Canberra",
+      "D": "Perth"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 66,
+    "nivel": 4,
+    "pregunta": "¿Qué tratado puso fin oficialmente a la Primera Guerra Mundial?",
+    "opciones": {
+      "A": "Tratado de Versalles",
+      "B": "Tratado de Utrecht",
+      "C": "Tratado de Tordesillas",
+      "D": "Tratado de Yalta"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 67,
+    "nivel": 4,
+    "pregunta": "¿Cuál es el número atómico del hidrógeno?",
+    "opciones": {
+      "A": "0",
+      "B": "1",
+      "C": "2",
+      "D": "3"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 68,
+    "nivel": 4,
+    "pregunta": "¿Quién pintó \"La noche estrellada\"?",
+    "opciones": {
+      "A": "Claude Monet",
+      "B": "Vincent van Gogh",
+      "C": "Paul Cézanne",
+      "D": "Edgar Degas"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 69,
+    "nivel": 4,
+    "pregunta": "¿En qué año cayó el Muro de Berlín?",
+    "opciones": {
+      "A": "1987",
+      "B": "1989",
+      "C": "1991",
+      "D": "1993"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 70,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la capital de Egipto?",
+    "opciones": {
+      "A": "Alejandría",
+      "B": "Luxor",
+      "C": "El Cairo",
+      "D": "Giza"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 71,
+    "nivel": 4,
+    "pregunta": "¿Qué científico formuló la teoría de la relatividad?",
+    "opciones": {
+      "A": "Isaac Newton",
+      "B": "Albert Einstein",
+      "C": "Niels Bohr",
+      "D": "Max Planck"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 72,
+    "nivel": 4,
+    "pregunta": "¿Cómo se llama la división celular que da origen a los gametos?",
+    "opciones": {
+      "A": "Mitosis",
+      "B": "Meiosis",
+      "C": "Fisión binaria",
+      "D": "Gemación"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 73,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la cordillera más extensa del mundo?",
+    "opciones": {
+      "A": "Himalaya",
+      "B": "Montañas Rocosas",
+      "C": "Andes",
+      "D": "Alpes"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 74,
+    "nivel": 4,
+    "pregunta": "¿Quién escribió \"El Principito\"?",
+    "opciones": {
+      "A": "Antoine de Saint-Exupéry",
+      "B": "Víctor Hugo",
+      "C": "Albert Camus",
+      "D": "Jules Verne"
+    },
+    "respuestaCorrecta": "A"
+  },
+  {
+    "id": 75,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la capital de Canadá?",
+    "opciones": {
+      "A": "Toronto",
+      "B": "Vancouver",
+      "C": "Montreal",
+      "D": "Ottawa"
+    },
+    "respuestaCorrecta": "D"
+  },
+  {
+    "id": 76,
+    "nivel": 4,
+    "pregunta": "¿Cuántas vértebras se cuentan tradicionalmente en la columna vertebral humana?",
+    "opciones": {
+      "A": "26",
+      "B": "33",
+      "C": "40",
+      "D": "24"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 77,
+    "nivel": 4,
+    "pregunta": "¿Cuál es el mayor desierto frío del mundo?",
+    "opciones": {
+      "A": "Desierto de Gobi",
+      "B": "Patagonia",
+      "C": "Antártida",
+      "D": "Siberia"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 78,
+    "nivel": 4,
+    "pregunta": "¿Quién compuso \"Las Cuatro Estaciones\"?",
+    "opciones": {
+      "A": "Johann Sebastian Bach",
+      "B": "Antonio Vivaldi",
+      "C": "Wolfgang Amadeus Mozart",
+      "D": "Franz Schubert"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 79,
+    "nivel": 4,
+    "pregunta": "¿Cuál es la capital de Rusia?",
+    "opciones": {
+      "A": "San Petersburgo",
+      "B": "Moscú",
+      "C": "Kiev",
+      "D": "Minsk"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 80,
+    "nivel": 4,
+    "pregunta": "¿Qué polímero natural forma las paredes celulares de las plantas?",
+    "opciones": {
+      "A": "Quitina",
+      "B": "Celulosa",
+      "C": "Glucógeno",
+      "D": "Almidón"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 81,
+    "nivel": 5,
+    "pregunta": "¿En qué año se creó la Organización de las Naciones Unidas?",
+    "opciones": {
+      "A": "1919",
+      "B": "1939",
+      "C": "1945",
+      "D": "1950"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 82,
+    "nivel": 5,
+    "pregunta": "¿Quién formuló la teoría de la evolución por selección natural?",
+    "opciones": {
+      "A": "Gregor Mendel",
+      "B": "Charles Darwin",
+      "C": "Louis Pasteur",
+      "D": "Robert Hooke"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 83,
+    "nivel": 5,
+    "pregunta": "¿Cuál es la partícula subatómica con carga negativa?",
+    "opciones": {
+      "A": "Protón",
+      "B": "Neutrón",
+      "C": "Electrón",
+      "D": "Fotón"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 84,
+    "nivel": 5,
+    "pregunta": "¿En qué año inició la Guerra de los Mil Días en Colombia?",
+    "opciones": {
+      "A": "1885",
+      "B": "1899",
+      "C": "1902",
+      "D": "1910"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 85,
+    "nivel": 5,
+    "pregunta": "¿Quién pintó el techo de la Capilla Sixtina?",
+    "opciones": {
+      "A": "Rafael",
+      "B": "Miguel Ángel",
+      "C": "Leonardo da Vinci",
+      "D": "Donatello"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 86,
+    "nivel": 5,
+    "pregunta": "¿En qué año se separó Panamá de Colombia?",
+    "opciones": {
+      "A": "1899",
+      "B": "1903",
+      "C": "1910",
+      "D": "1921"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 87,
+    "nivel": 5,
+    "pregunta": "¿Cuál es la capital de Turquía?",
+    "opciones": {
+      "A": "Estambul",
+      "B": "Ankara",
+      "C": "Esmirna",
+      "D": "Antalya"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 88,
+    "nivel": 5,
+    "pregunta": "¿Qué filósofo griego fue maestro de Alejandro Magno?",
+    "opciones": {
+      "A": "Sócrates",
+      "B": "Platón",
+      "C": "Aristóteles",
+      "D": "Pitágoras"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 89,
+    "nivel": 5,
+    "pregunta": "¿Cuál es el elemento más abundante en el universo?",
+    "opciones": {
+      "A": "Helio",
+      "B": "Hidrógeno",
+      "C": "Oxígeno",
+      "D": "Carbono"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 90,
+    "nivel": 5,
+    "pregunta": "¿En qué año se lanzó el primer satélite artificial, el Sputnik 1?",
+    "opciones": {
+      "A": "1955",
+      "B": "1957",
+      "C": "1961",
+      "D": "1969"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 91,
+    "nivel": 5,
+    "pregunta": "¿Quién es el autor al que se atribuyen \"La Ilíada\" y \"La Odisea\"?",
+    "opciones": {
+      "A": "Sófocles",
+      "B": "Homero",
+      "C": "Virgilio",
+      "D": "Ovidio"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 92,
+    "nivel": 5,
+    "pregunta": "¿Cuál es la capital de Kenia?",
+    "opciones": {
+      "A": "Mombasa",
+      "B": "Nairobi",
+      "C": "Kampala",
+      "D": "Dar es Salaam"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 93,
+    "nivel": 5,
+    "pregunta": "¿Cómo se llama el proceso mediante el cual las bacterias intercambian material genético?",
+    "opciones": {
+      "A": "Mitosis",
+      "B": "Meiosis",
+      "C": "Conjugación bacteriana",
+      "D": "Esporulación"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 94,
+    "nivel": 5,
+    "pregunta": "¿En qué año terminó la Segunda Guerra Mundial?",
+    "opciones": {
+      "A": "1943",
+      "B": "1944",
+      "C": "1945",
+      "D": "1946"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 95,
+    "nivel": 5,
+    "pregunta": "¿Quién desarrolló el cálculo infinitesimal de forma independiente junto con Newton?",
+    "opciones": {
+      "A": "René Descartes",
+      "B": "Gottfried Leibniz",
+      "C": "Blaise Pascal",
+      "D": "Pierre de Fermat"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 96,
+    "nivel": 5,
+    "pregunta": "¿Cuál es la capital de Indonesia?",
+    "opciones": {
+      "A": "Bali",
+      "B": "Yakarta",
+      "C": "Surabaya",
+      "D": "Bandung"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 97,
+    "nivel": 5,
+    "pregunta": "¿A quién se conoce en la historia de Colombia como \"El Precursor\" por traducir los Derechos del Hombre y del Ciudadano?",
+    "opciones": {
+      "A": "Francisco de Miranda",
+      "B": "Antonio Nariño",
+      "C": "Camilo Torres",
+      "D": "José Celestino Mutis"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 98,
+    "nivel": 5,
+    "pregunta": "¿Cuál es la unidad de medida de la resistencia eléctrica?",
+    "opciones": {
+      "A": "Voltio",
+      "B": "Amperio",
+      "C": "Ohmio",
+      "D": "Vatio"
+    },
+    "respuestaCorrecta": "C"
+  },
+  {
+    "id": 99,
+    "nivel": 5,
+    "pregunta": "¿En qué año se promulgó la Declaración Universal de los Derechos Humanos?",
+    "opciones": {
+      "A": "1945",
+      "B": "1948",
+      "C": "1950",
+      "D": "1952"
+    },
+    "respuestaCorrecta": "B"
+  },
+  {
+    "id": 100,
+    "nivel": 5,
+    "pregunta": "¿Quién propuso la teoría heliocéntrica del sistema solar?",
+    "opciones": {
+      "A": "Galileo Galilei",
+      "B": "Johannes Kepler",
+      "C": "Nicolás Copérnico",
+      "D": "Tycho Brahe"
+    },
+    "respuestaCorrecta": "C"
+  }
+]

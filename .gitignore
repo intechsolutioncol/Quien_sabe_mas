@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# secretos sueltos que no deben terminar en el repo
+*PASSWORD*.txt
+*password*.txt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
