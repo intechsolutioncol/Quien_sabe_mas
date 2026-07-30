@@ -4,8 +4,7 @@ import { obtenerJuegoPorCodigo, obtenerBancoPreguntas } from '@/lib/juego/datos'
 import { seleccionarPreguntasDeBanco, formatearPreguntaCliente } from '@/lib/juego/distribucion';
 
 // Un estudiante entra con el código del juego (equivalente a
-// unirseConCodigo de Code.js). El modo "en vivo" se agrega en la
-// siguiente fase de la migración.
+// unirseConCodigo de Code.js), sea modo individual o "en vivo".
 export async function POST(request) {
   const { codigo, nombreEstudiante } = await request.json();
   const codigoNormalizado = (codigo || '').toString().trim().toUpperCase();
@@ -22,11 +21,23 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Este juego está inactivo. Consulta a tu profesor.' }, { status: 403 });
   }
 
+  const nombreEstudianteNormalizado = (nombreEstudiante || '').toString().trim().substring(0, 40) || 'Jugador';
+
   if (juego.modo === 'vivo') {
-    return NextResponse.json(
-      { error: 'El modo "en vivo" todavía no está disponible en la nueva plataforma. Vuelve pronto.' },
-      { status: 501 }
-    );
+    const { data: sessionId, error } = await admin.rpc('vivo_unirse', {
+      p_codigo: codigoNormalizado,
+      p_nombre: nombreEstudianteNormalizado,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 409 });
+
+    return NextResponse.json({
+      modo: 'vivo',
+      sessionId,
+      codigoJuego: codigoNormalizado,
+      nombreJuego: juego.nombre_juego,
+      tematica: juego.tematica,
+      nombreJugador: nombreEstudianteNormalizado,
+    });
   }
 
   const banco = await obtenerBancoPreguntas(admin, juego.id);
@@ -35,13 +46,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Este juego todavía no tiene preguntas cargadas. Consulta a tu profesor.' }, { status: 409 });
   }
 
-  const nombre = (nombreEstudiante || '').toString().trim().substring(0, 40) || 'Jugador';
-
   const { data: sesion, error } = await admin
     .from('sesiones_individuales')
     .insert({
       juego_id: juego.id,
-      nombre_jugador: nombre,
+      nombre_jugador: nombreEstudianteNormalizado,
       ayudas_activas: juego.ayudas,
       preguntas: preguntasPartida,
       pregunta_actual: 0,
@@ -57,7 +66,7 @@ export async function POST(request) {
   return NextResponse.json({
     modo: 'individual',
     sessionId: sesion.session_id,
-    nombreJugador: nombre,
+    nombreJugador: nombreEstudianteNormalizado,
     nombreJuego: juego.nombre_juego,
     tematica: juego.tematica,
     totalPreguntas: preguntasPartida.length,
