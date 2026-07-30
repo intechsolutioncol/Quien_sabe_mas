@@ -125,10 +125,12 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datos.codigoJuego]);
 
-  // Refresca la barra de tiempo cada 250ms usando el reloj local del
-  // navegador contra la marca fin_pregunta_programado del servidor.
+  // Refresca la barra de tiempo cada segundo usando el reloj local del
+  // navegador contra la marca fin_pregunta_programado del servidor (la
+  // transición CSS de la barra ya suaviza el movimiento entre ticks, así
+  // que no hace falta re-renderizar con más frecuencia que eso).
   useEffect(() => {
-    const id = setInterval(() => forzarRenderizado((n) => n + 1), 250);
+    const id = setInterval(() => forzarRenderizado((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
 

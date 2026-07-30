@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { llamarApi } from '@/lib/api-cliente';
 import { crearClienteNavegador } from '@/lib/supabase/client';
@@ -13,17 +13,16 @@ const INTERVALO_TICK_MS = 1000;
 // instante y además "tiquea" cada segundo contra /api/vivo/estado, que es
 // quien realmente dispara el avance automático por reloj en el servidor
 // (no hay cron: mientras esta pantalla esté abierta, ella hace de reloj).
+// Ese mismo tick de 1s ya renueva el estado en cada vuelta, así que
+// también sirve para que la barra de tiempo se vea fluida, sin necesitar
+// un segundo intervalo solo para forzar renders.
 export default function HostVivo({ codigo }) {
   const [estado, setEstado] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [accionando, setAccionando] = useState(false);
-  const [, forzarRenderizado] = useState(0);
-
-  const estadoRef = useRef(null);
 
   function actualizarEstado(nuevo) {
-    estadoRef.current = nuevo;
     setEstado(nuevo);
   }
 
@@ -85,13 +84,6 @@ export default function HostVivo({ codigo }) {
       supabase.removeChannel(canal);
     };
   }, [codigo]);
-
-  // Vuelve a renderizar cada segundo solo para que la barra de tiempo se
-  // vea fluida entre un tick del servidor y el siguiente.
-  useEffect(() => {
-    const id = setInterval(() => forzarRenderizado((n) => n + 1), 250);
-    return () => clearInterval(id);
-  }, []);
 
   async function accionHost(ruta) {
     if (accionando) return;

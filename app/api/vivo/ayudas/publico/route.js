@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server';
-import { crearClienteAdmin } from '@/lib/supabase/admin';
+import { marcarAyudaVivoUsada } from '@/lib/juego/vivo-ayudas';
 import { calcularPorcentajesPublico } from '@/lib/juego/ayudas';
 
 // Equivalente a usarPreguntaPublicoVivo de Vivo.js.
 export async function POST(request) {
   const { codigo, sessionId } = await request.json();
   const codigoNormalizado = (codigo || '').toString().trim().toUpperCase();
-  const admin = crearClienteAdmin();
 
-  const { data, error } = await admin.rpc('vivo_marcar_ayuda_usada', {
-    p_codigo: codigoNormalizado,
-    p_session_id: sessionId,
-    p_nombre_ayuda: 'publico',
-  });
+  const { data, error } = await marcarAyudaVivoUsada(codigoNormalizado, sessionId, 'publico');
   if (error) return NextResponse.json({ error: error.message }, { status: 409 });
 
   return NextResponse.json({ porcentajes: calcularPorcentajesPublico(data.respuestaCorrecta, data.nivel) });
