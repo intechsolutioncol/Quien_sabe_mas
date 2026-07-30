@@ -9,7 +9,9 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
     tematica: juego.tematica || '',
     profesor: juego.profesor || '',
     cantidadPreguntas: juego.cantidadPreguntas,
+    modo: juego.modo || 'individual',
     modoTiempo: juego.modoTiempo || 'porPregunta',
+    avanceVivo: juego.avanceVivo || 'automatico',
     segundosPorPregunta: juego.segundosPorPregunta || 45,
     duracionTotalMinutos: Math.round((juego.duracionTotalSegundos || 600) / 60),
     ayudaCincuenta: !!(juego.ayudas && juego.ayudas.cincuenta),
@@ -35,8 +37,9 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
           tematica: valores.tematica.trim(),
           profesor: valores.profesor.trim(),
           cantidadPreguntas: valores.cantidadPreguntas,
-          modo: 'individual',
+          modo: valores.modo,
           modoTiempo: valores.modoTiempo,
+          avanceVivo: valores.avanceVivo,
           segundosPorPregunta: valores.segundosPorPregunta,
           duracionTotalMinutos: valores.duracionTotalMinutos,
           ayudas: {
@@ -106,39 +109,68 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
             />
           </div>
           <div className="campo-formulario">
-            <label>¿Cómo funciona el tiempo?</label>
+            <label>Modo de juego</label>
             <div className="opciones-radio">
               <label className="radio-linea">
-                <input
-                  type="radio"
-                  checked={valores.modoTiempo === 'porPregunta'}
-                  onChange={() => actualizar('modoTiempo', 'porPregunta')}
-                />
-                Tiempo por pregunta
+                <input type="radio" checked={valores.modo === 'individual'} onChange={() => actualizar('modo', 'individual')} />
+                Individual (cada estudiante juega a su ritmo)
               </label>
               <label className="radio-linea">
-                <input
-                  type="radio"
-                  checked={valores.modoTiempo === 'total'}
-                  onChange={() => actualizar('modoTiempo', 'total')}
-                />
-                Tiempo total de la sesión
+                <input type="radio" checked={valores.modo === 'vivo'} onChange={() => actualizar('modo', 'vivo')} />
+                En vivo y sincronizado
               </label>
             </div>
           </div>
-          {valores.modoTiempo === 'total' ? (
+
+          {valores.modo === 'individual' && (
             <div className="campo-formulario">
-              <label htmlFor="ej-duracion-total">Duración total de la sesión (minutos)</label>
-              <input
-                id="ej-duracion-total"
-                type="number"
-                min={1}
-                max={120}
-                value={valores.duracionTotalMinutos}
-                onChange={(e) => actualizar('duracionTotalMinutos', e.target.value)}
-              />
+              <label>¿Cómo funciona el tiempo?</label>
+              <div className="opciones-radio">
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.modoTiempo === 'porPregunta'}
+                    onChange={() => actualizar('modoTiempo', 'porPregunta')}
+                  />
+                  Tiempo por pregunta
+                </label>
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.modoTiempo === 'total'}
+                    onChange={() => actualizar('modoTiempo', 'total')}
+                  />
+                  Tiempo total de la sesión
+                </label>
+              </div>
             </div>
-          ) : (
+          )}
+
+          {valores.modo === 'vivo' && (
+            <div className="campo-formulario">
+              <label>¿Cómo avanza el juego entre preguntas?</label>
+              <div className="opciones-radio">
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.avanceVivo === 'automatico'}
+                    onChange={() => actualizar('avanceVivo', 'automatico')}
+                  />
+                  Automático por tiempo
+                </label>
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.avanceVivo === 'manual'}
+                    onChange={() => actualizar('avanceVivo', 'manual')}
+                  />
+                  El profesor avanza manualmente
+                </label>
+              </div>
+            </div>
+          )}
+
+          {valores.modo === 'vivo' || valores.modoTiempo === 'porPregunta' ? (
             <div className="campo-formulario">
               <label htmlFor="ej-segundos-pregunta">Segundos por pregunta</label>
               <input
@@ -148,6 +180,18 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
                 max={300}
                 value={valores.segundosPorPregunta}
                 onChange={(e) => actualizar('segundosPorPregunta', e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="campo-formulario">
+              <label htmlFor="ej-duracion-total">Duración total de la sesión (minutos)</label>
+              <input
+                id="ej-duracion-total"
+                type="number"
+                min={1}
+                max={120}
+                value={valores.duracionTotalMinutos}
+                onChange={(e) => actualizar('duracionTotalMinutos', e.target.value)}
               />
             </div>
           )}

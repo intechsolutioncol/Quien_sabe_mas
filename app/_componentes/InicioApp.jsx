@@ -5,18 +5,26 @@ import PantallaRol from './PantallaRol';
 import PantallaIngresoEstudiante from './PantallaIngresoEstudiante';
 import PantallaJuego from './PantallaJuego';
 import PantallaFinal from './PantallaFinal';
+import PantallaLobbyVivo from './PantallaLobbyVivo';
+import PantallaJuegoVivo from './PantallaJuegoVivo';
+import PantallaFinalVivo from './PantallaFinalVivo';
 
 // Orquestador del lado "estudiante" (equivalente al router de pantallas
-// de script.html, sin el modo "en vivo" todavía). El rol "profesor" vive
-// aparte, en /profesor/*.
+// de script.html). El rol "profesor" vive aparte, en /profesor/*.
 export default function InicioApp() {
   const [pantalla, setPantalla] = useState('rol');
   const [datosPartida, setDatosPartida] = useState(null);
+  const [estadoVivoInicial, setEstadoVivoInicial] = useState(null);
   const [resultadoFinal, setResultadoFinal] = useState(null);
 
   function manejarIngreso(datos) {
     setDatosPartida(datos);
-    setPantalla('juego');
+    setPantalla(datos.modo === 'vivo' ? 'lobby-vivo' : 'juego');
+  }
+
+  function manejarEmpezarVivo(estadoInicial) {
+    setEstadoVivoInicial(estadoInicial);
+    setPantalla('juego-vivo');
   }
 
   function manejarFinal(resultado) {
@@ -24,8 +32,14 @@ export default function InicioApp() {
     setPantalla('final');
   }
 
+  function manejarFinalVivo(resultado) {
+    setResultadoFinal(resultado);
+    setPantalla('final-vivo');
+  }
+
   function jugarDeNuevo() {
     setDatosPartida(null);
+    setEstadoVivoInicial(null);
     setResultadoFinal(null);
     setPantalla('ingreso');
   }
@@ -42,9 +56,23 @@ export default function InicioApp() {
     return <PantallaJuego datos={datosPartida} onTerminar={manejarFinal} />;
   }
 
+  if (pantalla === 'lobby-vivo' && datosPartida) {
+    return <PantallaLobbyVivo datos={datosPartida} onEmpezar={manejarEmpezarVivo} />;
+  }
+
+  if (pantalla === 'juego-vivo' && datosPartida && estadoVivoInicial) {
+    return <PantallaJuegoVivo datos={datosPartida} estadoInicial={estadoVivoInicial} onFinal={manejarFinalVivo} />;
+  }
+
   if (pantalla === 'final' && resultadoFinal) {
     return (
       <PantallaFinal resultado={resultadoFinal} nombreJugador={datosPartida?.nombreJugador} onJugarDeNuevo={jugarDeNuevo} />
+    );
+  }
+
+  if (pantalla === 'final-vivo' && resultadoFinal) {
+    return (
+      <PantallaFinalVivo resultado={resultadoFinal} nombreJugador={datosPartida?.nombreJugador} onJugarDeNuevo={jugarDeNuevo} />
     );
   }
 

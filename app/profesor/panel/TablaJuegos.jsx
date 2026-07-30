@@ -1,8 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { llamarApi } from '@/lib/api-cliente';
 
 function describirTiempo(juego) {
+  if (juego.modo === 'vivo') {
+    const avanceTexto = juego.avanceVivo === 'manual' ? 'avance manual' : 'avance automático';
+    return `🔴 En vivo · ⏱ ${juego.segundosPorPregunta}s/pregunta · ${avanceTexto}`;
+  }
   return juego.modoTiempo === 'total'
     ? `⏱ ${Math.round(juego.duracionTotalSegundos / 60)} min totales`
     : `⏱ ${juego.segundosPorPregunta}s/pregunta`;
@@ -65,6 +70,11 @@ export default function TablaJuegos({ juegos, onCambio, onEditar, onCargarPregun
                 </span>
               </td>
               <td className="celda-acciones">
+                {juego.modo === 'vivo' && (
+                  <Link href={`/profesor/juego/${juego.codigo}/host`} className="boton-mini boton-mini-destacado">
+                    ▶ Iniciar en vivo
+                  </Link>
+                )}
                 <button type="button" className="boton-mini" onClick={() => onEditar(juego)}>
                   Editar
                 </button>

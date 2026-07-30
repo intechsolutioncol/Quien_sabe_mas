@@ -28,7 +28,8 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const esRutaProtegida = request.nextUrl.pathname.startsWith('/profesor/panel');
+  const esRutaProtegida =
+    request.nextUrl.pathname.startsWith('/profesor/panel') || request.nextUrl.pathname.startsWith('/profesor/juego');
 
   if (esRutaProtegida && !user) {
     const url = request.nextUrl.clone();
@@ -40,5 +41,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/profesor/panel/:path*'],
+  matcher: ['/profesor/panel/:path*', '/profesor/juego/:path*'],
 };

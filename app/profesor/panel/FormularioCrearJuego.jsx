@@ -9,7 +9,9 @@ const VALORES_INICIALES = {
   tematica: '',
   profesor: '',
   cantidadPreguntas: 15,
+  modo: 'individual',
   modoTiempo: 'porPregunta',
+  avanceVivo: 'automatico',
   segundosPorPregunta: 45,
   duracionTotalMinutos: 10,
   ayudaCincuenta: true,
@@ -42,8 +44,9 @@ export default function FormularioCrearJuego({ onJuegoCreado }) {
           tematica: valores.tematica.trim(),
           profesor: valores.profesor.trim(),
           cantidadPreguntas: valores.cantidadPreguntas,
-          modo: 'individual', // el modo "en vivo" se habilita en la siguiente fase
+          modo: valores.modo,
           modoTiempo: valores.modoTiempo,
+          avanceVivo: valores.avanceVivo,
           segundosPorPregunta: valores.segundosPorPregunta,
           duracionTotalMinutos: valores.duracionTotalMinutos,
           ayudas: {
@@ -174,41 +177,68 @@ export default function FormularioCrearJuego({ onJuegoCreado }) {
           />
         </div>
         <div className="campo-formulario">
-          <label>¿Cómo funciona el tiempo?</label>
+          <label>Modo de juego</label>
           <div className="opciones-radio">
             <label className="radio-linea">
-              <input
-                type="radio"
-                name="cj-modo-tiempo"
-                checked={valores.modoTiempo === 'porPregunta'}
-                onChange={() => actualizar('modoTiempo', 'porPregunta')}
-              />
-              Tiempo por pregunta (si se acaba o falla, termina el juego)
+              <input type="radio" checked={valores.modo === 'individual'} onChange={() => actualizar('modo', 'individual')} />
+              Individual (cada estudiante juega a su ritmo)
             </label>
             <label className="radio-linea">
-              <input
-                type="radio"
-                name="cj-modo-tiempo"
-                checked={valores.modoTiempo === 'total'}
-                onChange={() => actualizar('modoTiempo', 'total')}
-              />
-              Tiempo total de la sesión (el puntaje es la cantidad de preguntas contestadas bien)
+              <input type="radio" checked={valores.modo === 'vivo'} onChange={() => actualizar('modo', 'vivo')} />
+              En vivo y sincronizado (todos responden la misma pregunta a la vez)
             </label>
           </div>
         </div>
-        {valores.modoTiempo === 'total' ? (
+
+        {valores.modo === 'individual' && (
           <div className="campo-formulario">
-            <label htmlFor="cj-duracion-total">Duración total de la sesión (minutos)</label>
-            <input
-              id="cj-duracion-total"
-              type="number"
-              min={1}
-              max={120}
-              value={valores.duracionTotalMinutos}
-              onChange={(e) => actualizar('duracionTotalMinutos', e.target.value)}
-            />
+            <label>¿Cómo funciona el tiempo?</label>
+            <div className="opciones-radio">
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.modoTiempo === 'porPregunta'}
+                  onChange={() => actualizar('modoTiempo', 'porPregunta')}
+                />
+                Tiempo por pregunta (si se acaba o falla, termina el juego)
+              </label>
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.modoTiempo === 'total'}
+                  onChange={() => actualizar('modoTiempo', 'total')}
+                />
+                Tiempo total de la sesión (el puntaje es la cantidad de preguntas contestadas bien)
+              </label>
+            </div>
           </div>
-        ) : (
+        )}
+
+        {valores.modo === 'vivo' && (
+          <div className="campo-formulario">
+            <label>¿Cómo avanza el juego entre preguntas?</label>
+            <div className="opciones-radio">
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.avanceVivo === 'automatico'}
+                  onChange={() => actualizar('avanceVivo', 'automatico')}
+                />
+                Automático por tiempo (se revela y avanza solo)
+              </label>
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.avanceVivo === 'manual'}
+                  onChange={() => actualizar('avanceVivo', 'manual')}
+                />
+                El profesor avanza manualmente (para comentar cada pregunta)
+              </label>
+            </div>
+          </div>
+        )}
+
+        {valores.modo === 'vivo' || valores.modoTiempo === 'porPregunta' ? (
           <div className="campo-formulario">
             <label htmlFor="cj-segundos-pregunta">Segundos por pregunta</label>
             <input
@@ -218,6 +248,18 @@ export default function FormularioCrearJuego({ onJuegoCreado }) {
               max={300}
               value={valores.segundosPorPregunta}
               onChange={(e) => actualizar('segundosPorPregunta', e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="campo-formulario">
+            <label htmlFor="cj-duracion-total">Duración total de la sesión (minutos)</label>
+            <input
+              id="cj-duracion-total"
+              type="number"
+              min={1}
+              max={120}
+              value={valores.duracionTotalMinutos}
+              onChange={(e) => actualizar('duracionTotalMinutos', e.target.value)}
             />
           </div>
         )}
