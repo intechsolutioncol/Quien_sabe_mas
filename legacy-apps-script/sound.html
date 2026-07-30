@@ -1,0 +1,213 @@
+<script>
+/**
+ * Motor de sonido 100% generado con Web Audio API (sin archivos externos,
+ * sin audio protegido por derechos de autor). Crea un ambiente de tensión
+ * durante la pregunta, un "redoble" de suspenso al responder y stings de
+ * acierto/error, inspirados en el formato clásico pero con sonidos propios.
+ */
+window.Sonido = (function () {
+  'use strict';
+
+  var ctx = null;
+  var maestro = null;
+  var bufferRuido = null;
+  var silenciado = (localStorage.getItem('qsm-silenciado') === '1');
+
+  var fondo = null; // { osciladores[], lfo, gainLfo, filtro, gainDrone, tension, timeoutPulso, activo }
+
+  function obtenerContexto() {
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      maestro = ctx.createGain();
+      maestro.gain.value = silenciado ? 0 : 0.55;
+      maestro.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function obtenerRuido() {
+    var c = obtenerContexto();
+    if (!bufferRuido) {
+      var duracion = 0.3;
+      var frames = Math.floor(c.sampleRate * duracion);
+      bufferRuido = c.createBuffer(1, frames, c.sampleRate);
+      var datos = bufferRuido.getChannelData(0);
+      for (var i = 0; i < frames; i++) datos[i] = Math.random() * 2 - 1;
+    }
+    return bufferRuido;
+  }
+
+  // Tono simple con envolvente ADSR sencilla (ataque-decaimiento exponencial).
+  function tono(frecuencia, inicio, duracion, tipo, volumenPico, pendiente) {
+    var c = obtenerContexto();
+    var osc = c.createOscillator();
+    var gain = c.createGain();
+    osc.type = tipo || 'sine';
+    var t0 = c.currentTime + inicio;
+    osc.frequency.setValueAtTime(frecuencia, t0);
+    if (pendiente) osc.frequency.exponentialRampToValueAtTime(Math.max(1, pendiente), t0 + duracion);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(volumenPico || 0.3, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duracion);
+    osc.connect(gain);
+    gain.connect(maestro);
+    osc.start(t0);
+    osc.stop(t0 + duracion + 0.05);
+  }
+
+  // "Tick" percusivo (ruido filtrado) usado en el pulso de tensión y el redoble.
+  function tick(inicio, volumenPico, frecuenciaFiltro) {
+    var c = obtenerContexto();
+    var fuente = c.createBufferSource();
+    fuente.buffer = obtenerRuido();
+    var filtro = c.createBiquadFilter();
+    filtro.type = 'bandpass';
+    filtro.frequency.value = frecuenciaFiltro || 1800;
+    filtro.Q.value = 1.1;
+    var gain = c.createGain();
+    var t0 = c.currentTime + inicio;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(volumenPico || 0.25, t0 + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+    fuente.connect(filtro);
+    filtro.connect(gain);
+    gain.connect(maestro);
+    fuente.start(t0);
+    fuente.stop(t0 + 0.12);
+
+    // "Golpe" grave que acompaña el tick, como un latido.
+    tono(85, inicio, 0.14, 'sine', (volumenPico || 0.25) * 0.9);
+  }
+
+  function limpiarFondo() {
+    if (!fondo) return;
+    if (fondo.timeoutPulso) clearTimeout(fondo.timeoutPulso);
+    var c = ctx;
+    if (c) {
+      var ahora = c.currentTime;
+      try {
+        fondo.gainDrone.gain.cancelScheduledValues(ahora);
+        fondo.gainDrone.gain.setTargetAtTime(0.0001, ahora, 0.15);
+      } catch (e) { /* noop */ }
+      fondo.osciladores.forEach(function (osc) {
+        try { osc.stop(ahora + 0.4); } catch (e) { /* noop */ }
+      });
+      if (fondo.lfo) { try { fondo.lfo.stop(ahora + 0.4); } catch (e) { /* noop */ } }
+    }
+    fondo.activo = false;
+    fondo = null;
+  }
+
+  return {
+    // Debe llamarse desde un gesto del usuario (clic) para desbloquear audio.
+    activar: function () { obtenerContexto(); },
+
+    estaSilenciado: function () { return silenciado; },
+
+    alternarSilencio: function () {
+      silenciado = !silenciado;
+      localStorage.setItem('qsm-silenciado', silenciado ? '1' : '0');
+      if (maestro && ctx) maestro.gain.setTargetAtTime(silenciado ? 0 : 0.55, ctx.currentTime, 0.05);
+      return silenciado;
+    },
+
+    // Ambiente de tensión: pad grave + pulso tipo "latido" que se acelera
+    // según el progreso del temporizador (0 = inicio, 1 = se acaba el tiempo).
+    iniciarSuspenso: function () {
+      var c = obtenerContexto();
+      limpiarFondo();
+
+      var osc1 = c.createOscillator();
+      var osc2 = c.createOscillator();
+      osc1.type = 'sine'; osc1.frequency.value = 82;
+      osc2.type = 'sine'; osc2.frequency.value = 84.5;
+
+      var filtro = c.createBiquadFilter();
+      filtro.type = 'lowpass';
+      filtro.frequency.value = 300;
+
+      var gainDrone = c.createGain();
+      gainDrone.gain.value = 0.0001;
+      gainDrone.gain.setTargetAtTime(0.07, c.currentTime, 0.6);
+
+      var lfo = c.createOscillator();
+      var gainLfo = c.createGain();
+      lfo.frequency.value = 0.15;
+      gainLfo.gain.value = 0.03;
+      lfo.connect(gainLfo);
+      gainLfo.connect(gainDrone.gain);
+
+      osc1.connect(filtro); osc2.connect(filtro);
+      filtro.connect(gainDrone);
+      gainDrone.connect(maestro);
+
+      osc1.start(); osc2.start(); lfo.start();
+
+      fondo = {
+        osciladores: [osc1, osc2],
+        lfo: lfo,
+        gainLfo: gainLfo,
+        filtro: filtro,
+        gainDrone: gainDrone,
+        tension: 0,
+        timeoutPulso: null,
+        activo: true
+      };
+
+      function programarPulso() {
+        if (!fondo || !fondo.activo) return;
+        var intervaloMs = 850 - fondo.tension * 550; // 850ms -> 300ms
+        var volumen = 0.12 + fondo.tension * 0.18;
+        var frecFiltro = 1500 + fondo.tension * 900;
+        tick(0, volumen, frecFiltro);
+        fondo.timeoutPulso = setTimeout(programarPulso, Math.max(180, intervaloMs));
+      }
+      programarPulso();
+    },
+
+    actualizarTension: function (fraccion) {
+      if (fondo) fondo.tension = Math.max(0, Math.min(1, fraccion));
+    },
+
+    detenerSuspenso: function () { limpiarFondo(); },
+
+    // Redoble corto antes de revelar la respuesta (genera inquietud).
+    redobleRespuesta: function () {
+      obtenerContexto();
+      var pasos = 10;
+      for (var i = 0; i < pasos; i++) {
+        var progreso = i / pasos;
+        var inicio = (progreso * progreso) * 1.1; // se acelera con el tiempo
+        tick(inicio, 0.18 + progreso * 0.12, 2000 + progreso * 1500);
+      }
+      tono(140, 1.15, 0.25, 'sawtooth', 0.22, 60);
+    },
+
+    correcto: function () {
+      obtenerContexto();
+      [523.25, 659.25, 783.99, 1046.5].forEach(function (frecuencia, i) {
+        tono(frecuencia, i * 0.11, 0.35, 'triangle', 0.28);
+      });
+    },
+
+    incorrecto: function () {
+      obtenerContexto();
+      tono(320, 0, 0.7, 'sawtooth', 0.26, 70);
+    },
+
+    finalGanador: function () {
+      obtenerContexto();
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (frecuencia, i) {
+        tono(frecuencia, i * 0.14, 0.5, 'triangle', 0.3);
+      });
+    },
+
+    retirada: function () {
+      obtenerContexto();
+      tono(659.25, 0, 0.3, 'triangle', 0.25);
+      tono(880, 0.12, 0.4, 'triangle', 0.25);
+    }
+  };
+})();
+</script>

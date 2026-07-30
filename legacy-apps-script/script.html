@@ -1,0 +1,1313 @@
+<script>
+(function () {
+  'use strict';
+
+  var estadoCliente = {
+    modoJuego: 'individual',
+    sessionId: null,
+    codigoJuego: null,
+    nombreJugador: '',
+    totalPreguntas: 0,
+    ayudasActivas: { cincuenta: true, llamada: true, publico: true },
+    modoTiempo: 'porPregunta',
+    segundosPorPregunta: 45,
+    duracionTotalSegundos: 600,
+    preguntaActual: null,
+    respondiendo: false,
+    tiempoAgotado: false,
+    temporizadorId: null,
+    segundosRestantes: 0
+  };
+
+  var estadoDocente = { token: null, juegoRecienCreado: null };
+  var juegoModalActual = null;
+
+  // Estado del sondeo en vivo (tanto para el estudiante como para el host).
+  var vivoEstudiante = { pollId: null, indiceMostrado: -1, faseRevelandoMostrada: false };
+  var estadoHost = { hostToken: null, codigo: null, nombreJuego: '', pollId: null, indiceMostrado: -1, faseRevelandoMostrada: false };
+
+  // ---------------------------------------------------------------
+  // Utilidades
+  // ---------------------------------------------------------------
+  function formatearFecha(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString('es-CO') + ' ' + d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function escaparHtml(texto) {
+    var div = document.createElement('div');
+    div.textContent = texto === null || texto === undefined ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  function mostrarPantalla(id) {
+    document.querySelectorAll('.pantalla').forEach(function (el) { el.classList.remove('activa'); });
+    document.getElementById(id).classList.add('activa');
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  // ---------------------------------------------------------------
+  // Sonido (botón de silencio)
+  // ---------------------------------------------------------------
+  function actualizarIconoSilencio() {
+    var boton = el('btn-silencio');
+    var silenciado = Sonido.estaSilenciado();
+    boton.textContent = silenciado ? '🔇' : '🔊';
+    boton.classList.toggle('silenciado', silenciado);
+  }
+  actualizarIconoSilencio();
+  el('btn-silencio').addEventListener('click', function () {
+    Sonido.activar();
+    Sonido.alternarSilencio();
+    actualizarIconoSilencio();
+  });
+
+  // =================================================================
+  // ROUTER: selección de rol / volver
+  // =================================================================
+  el('btn-rol-estudiante').addEventListener('click', function () {
+    mostrarPantalla('pantalla-estudiante-ingreso');
+  });
+  el('btn-rol-profesor').addEventListener('click', function () {
+    mostrarPantalla('pantalla-docente-login');
+  });
+  document.querySelectorAll('[data-volver]').forEach(function (boton) {
+    boton.addEventListener('click', function () {
+      detenerPollHost();
+      detenerPollEstudianteVivo();
+      mostrarPantalla(boton.getAttribute('data-volver'));
+    });
+  });
+
+  // =================================================================
+  // ESTUDIANTE: ingreso por código
+  // =================================================================
+  el('btn-comenzar').addEventListener('click', ingresarComoEstudiante);
+  el('input-nombre').addEventListener('keydown', function (e) { if (e.key === 'Enter') ingresarComoEstudiante(); });
+  el('input-codigo').addEventListener('keydown', function (e) { if (e.key === 'Enter') ingresarComoEstudiante(); });
+
+  function ingresarComoEstudiante() {
+    Sonido.activar();
+    var codigo = el('input-codigo').value.trim();
+    var nombre = el('input-nombre').value.trim();
+
+    if (!codigo || !nombre) {
+      el('error-estudiante').textContent = 'Escribe el código del juego y tu nombre.';
+      el('error-estudiante').classList.remove('oculto');
+      return;
+    }
+    el('error-estudiante').classList.add('oculto');
+    el('btn-comenzar').disabled = true;
+    el('btn-comenzar').textContent = 'Cargando...';
+
+    google.script.run
+      .withSuccessHandler(function (datos) {
+        el('btn-comenzar').disabled = false;
+        el('btn-comenzar').textContent = 'Ingresar al juego';
+
+        if (datos.modo === 'vivo') {
+          entrarALobbyVivo(datos);
+          return;
+        }
+
+        estadoCliente.modoJuego = 'individual';
+        estadoCliente.sessionId = datos.sessionId;
+        estadoCliente.nombreJugador = datos.nombreJugador;
+        estadoCliente.totalPreguntas = datos.totalPreguntas;
+        estadoCliente.ayudasActivas = datos.ayudasActivas || estadoCliente.ayudasActivas;
+        estadoCliente.modoTiempo = datos.modoTiempo || 'porPregunta';
+        estadoCliente.segundosPorPregunta = datos.segundosPorPregunta || 45;
+        estadoCliente.duracionTotalSegundos = datos.duracionTotalSegundos || 600;
+        estadoCliente.tiempoAgotado = false;
+        estadoCliente.temporizadorId = null;
+        estadoCliente.segundosRestantes = estadoCliente.modoTiempo === 'total'
+          ? estadoCliente.duracionTotalSegundos
+          : estadoCliente.segundosPorPregunta;
+
+        el('jugador-nombre-juego').textContent = datos.nombreJugador;
+        el('etiqueta-juego-actual').textContent =
+          datos.nombreJuego + (datos.tematica ? ' · ' + datos.tematica : '');
+        el('btn-retirarse').style.display = '';
+
+        construirEscalera();
+        resetearAyudas();
+        mostrarPantalla('pantalla-juego');
+        mostrarPregunta(datos.pregunta);
+      })
+      .withFailureHandler(function (error) {
+        el('error-estudiante').textContent = error.message;
+        el('error-estudiante').classList.remove('oculto');
+        el('btn-comenzar').disabled = false;
+        el('btn-comenzar').textContent = 'Ingresar al juego';
+      })
+      .unirseConCodigo(codigo, nombre);
+  }
+
+  // =================================================================
+  // DOCENTE: login
+  // =================================================================
+  el('btn-login-docente').addEventListener('click', iniciarSesionDocenteUI);
+  el('input-password-docente').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') iniciarSesionDocenteUI();
+  });
+
+  function iniciarSesionDocenteUI() {
+    var password = el('input-password-docente').value;
+    el('error-docente-login').classList.add('oculto');
+
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        estadoDocente.token = resultado.token;
+        el('input-password-docente').value = '';
+        el('juego-recien-creado').classList.add('oculto');
+        mostrarPantalla('pantalla-docente-panel');
+        cargarListaJuegos();
+      })
+      .withFailureHandler(function (error) {
+        el('error-docente-login').textContent = error.message;
+        el('error-docente-login').classList.remove('oculto');
+      })
+      .iniciarSesionDocente(password);
+  }
+
+  el('btn-cerrar-sesion-docente').addEventListener('click', function () {
+    estadoDocente.token = null;
+    estadoDocente.juegoRecienCreado = null;
+    mostrarPantalla('pantalla-rol');
+  });
+
+  // =================================================================
+  // DOCENTE: probar conexión con la IA
+  // =================================================================
+  el('btn-probar-ia').addEventListener('click', function () {
+    var boton = this;
+    var resultado = el('resultado-probar-ia');
+    boton.disabled = true;
+    resultado.classList.remove('oculto', 'exito', 'error');
+    resultado.textContent = 'Probando...';
+
+    google.script.run
+      .withSuccessHandler(function (r) {
+        resultado.classList.add(r.valida ? 'exito' : 'error');
+        resultado.textContent = r.mensaje;
+        boton.disabled = false;
+      })
+      .withFailureHandler(function (error) {
+        resultado.classList.add('error');
+        resultado.textContent = 'Error: ' + error.message;
+        boton.disabled = false;
+      })
+      .probarConexionIA(estadoDocente.token);
+  });
+
+  // =================================================================
+  // DOCENTE: crear juego
+  // =================================================================
+  document.querySelectorAll('input[name="cj-modo-tiempo"], input[name="cj-modo"]').forEach(function (radio) {
+    radio.addEventListener('change', actualizarCamposTiempo);
+  });
+  function actualizarCamposTiempo() {
+    var esVivo = document.querySelector('input[name="cj-modo"]:checked').value === 'vivo';
+    var esTotal = document.querySelector('input[name="cj-modo-tiempo"]:checked').value === 'total';
+    el('cj-grupo-modo-tiempo').classList.toggle('oculto', esVivo);
+    el('cj-grupo-avance-vivo').classList.toggle('oculto', !esVivo);
+    el('campo-segundos-pregunta').classList.toggle('oculto', !esVivo && esTotal);
+    el('campo-duracion-total').classList.toggle('oculto', esVivo || !esTotal);
+  }
+
+  el('form-crear-juego').addEventListener('submit', function (e) {
+    e.preventDefault();
+    el('error-crear-juego').classList.add('oculto');
+
+    var datos = {
+      nombreJuego: el('cj-nombre').value.trim(),
+      tematica: el('cj-tematica').value.trim(),
+      profesor: el('cj-profesor').value.trim(),
+      cantidadPreguntas: el('cj-cantidad').value,
+      modo: document.querySelector('input[name="cj-modo"]:checked').value,
+      modoTiempo: document.querySelector('input[name="cj-modo-tiempo"]:checked').value,
+      avanceVivo: document.querySelector('input[name="cj-avance-vivo"]:checked').value,
+      segundosPorPregunta: el('cj-segundos-pregunta').value,
+      duracionTotalMinutos: el('cj-duracion-total').value,
+      ayudas: {
+        cincuenta: el('cj-ayuda-cincuenta').checked,
+        llamada: el('cj-ayuda-llamada').checked,
+        publico: el('cj-ayuda-publico').checked
+      }
+    };
+
+    google.script.run
+      .withSuccessHandler(function (juego) {
+        estadoDocente.juegoRecienCreado = juego;
+        el('codigo-generado-texto').textContent = juego.codigo;
+        el('resultado-import-nuevo').classList.add('oculto');
+        el('input-archivo-nuevo').value = '';
+        el('juego-recien-creado').classList.remove('oculto');
+        el('form-crear-juego').reset();
+        actualizarCamposTiempo();
+        cargarListaJuegos();
+      })
+      .withFailureHandler(function (error) {
+        el('error-crear-juego').textContent = error.message;
+        el('error-crear-juego').classList.remove('oculto');
+      })
+      .crearJuego(estadoDocente.token, datos);
+  });
+
+  // ---------------------------------------------------------------
+  // Plantilla CSV (100% generada en el navegador, sin ir al servidor)
+  // ---------------------------------------------------------------
+  function descargarPlantillaCsv() {
+    var filas = [
+      ['Nivel', 'Pregunta', 'Opcion A', 'Opcion B', 'Opcion C', 'Opcion D', 'Respuesta Correcta (A, B, C o D)'],
+      ['1', '¿Cuánto es 2 + 2? (ejemplo nivel muy fácil)', '3', '4', '5', '6', 'B'],
+      ['2', 'Ejemplo de pregunta nivel fácil...', 'Opción A', 'Opción B', 'Opción C', 'Opción D', 'A'],
+      ['3', 'Ejemplo de pregunta nivel medio...', 'Opción A', 'Opción B', 'Opción C', 'Opción D', 'C'],
+      ['4', 'Ejemplo de pregunta nivel difícil...', 'Opción A', 'Opción B', 'Opción C', 'Opción D', 'D'],
+      ['5', 'Ejemplo de pregunta nivel muy difícil...', 'Opción A', 'Opción B', 'Opción C', 'Opción D', 'A']
+    ];
+    var csv = filas.map(function (fila) {
+      return fila.map(function (valor) {
+        var texto = String(valor);
+        return /[",\n]/.test(texto) ? '"' + texto.replace(/"/g, '""') + '"' : texto;
+      }).join(',');
+    }).join('\r\n');
+
+    var bom = String.fromCharCode(0xFEFF);
+    var blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = 'plantilla_preguntas_quien_sabe_mas.csv';
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    URL.revokeObjectURL(url);
+  }
+
+  el('btn-descargar-plantilla-nuevo').addEventListener('click', descargarPlantillaCsv);
+  el('btn-descargar-plantilla-modal').addEventListener('click', descargarPlantillaCsv);
+
+  function leerArchivoComoTexto(archivo, callback) {
+    var lector = new FileReader();
+    lector.onload = function (e) { callback(e.target.result); };
+    lector.readAsText(archivo, 'UTF-8');
+  }
+
+  function mostrarResultadoCarga(elementoMensaje, resultado) {
+    elementoMensaje.classList.remove('oculto', 'exito', 'error');
+    var mensaje = 'Se guardaron ' + resultado.importadas + ' de ' + resultado.totalFilas + ' preguntas.';
+    elementoMensaje.classList.add(resultado.errores.length ? 'error' : 'exito');
+    if (resultado.errores.length) {
+      mensaje += ' Con problemas: ' + resultado.errores.join(' | ');
+    }
+    elementoMensaje.textContent = mensaje;
+  }
+
+  function importarPreguntas(codigo, textoCsv, elementoMensaje) {
+    elementoMensaje.classList.remove('oculto', 'exito', 'error');
+    elementoMensaje.textContent = 'Importando...';
+
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        mostrarResultadoCarga(elementoMensaje, resultado);
+        cargarListaJuegos();
+      })
+      .withFailureHandler(function (error) {
+        elementoMensaje.classList.add('error');
+        elementoMensaje.textContent = 'Error: ' + error.message;
+      })
+      .importarPreguntasExcel(estadoDocente.token, codigo, textoCsv);
+  }
+
+  el('input-archivo-nuevo').addEventListener('change', function (e) {
+    var archivo = e.target.files[0];
+    if (!archivo || !estadoDocente.juegoRecienCreado) return;
+    leerArchivoComoTexto(archivo, function (texto) {
+      importarPreguntas(estadoDocente.juegoRecienCreado.codigo, texto, el('resultado-import-nuevo'));
+    });
+  });
+
+  el('input-archivo-modal').addEventListener('change', function (e) {
+    var archivo = e.target.files[0];
+    if (!archivo || !juegoModalActual) return;
+    leerArchivoComoTexto(archivo, function (texto) {
+      importarPreguntas(juegoModalActual.codigo, texto, el('resultado-import-modal'));
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Crear preguntas con IA (Gemini)
+  // ---------------------------------------------------------------
+  var juegoParaGenerarIA = null;
+
+  function abrirModalGenerarIA(juego) {
+    juegoParaGenerarIA = juego;
+    el('ia-nombre-juego').textContent = juego.nombreJuego + ' (' + juego.codigo + ')';
+    el('ia-info-tematica').textContent = juego.tematica
+      ? 'Se generarán ' + juego.cantidadPreguntas + ' preguntas sobre "' + juego.tematica + '", de nivel 1 (muy fácil) a 5 (muy difícil). Esto reemplaza las preguntas que ya tenga cargadas este juego.'
+      : 'Este juego no tiene temática definida. Ciérralo, usa "Editar" para agregar una temática y vuelve a intentarlo.';
+    el('ia-estado').classList.add('oculto');
+    el('btn-generar-ia').disabled = !juego.tematica;
+    el('btn-generar-ia').textContent = 'Generar preguntas';
+    el('modal-generar-ia').classList.remove('oculto');
+  }
+
+  el('btn-generar-ia-nuevo').addEventListener('click', function () {
+    if (estadoDocente.juegoRecienCreado) abrirModalGenerarIA(estadoDocente.juegoRecienCreado);
+  });
+  el('btn-generar-ia-modal').addEventListener('click', function () {
+    if (juegoModalActual) abrirModalGenerarIA(juegoModalActual);
+  });
+  el('cerrar-modal-ia').addEventListener('click', function () {
+    el('modal-generar-ia').classList.add('oculto');
+  });
+
+  el('btn-generar-ia').addEventListener('click', function () {
+    if (!juegoParaGenerarIA || this.disabled) return;
+    var edad = el('ia-edad').value;
+
+    el('btn-generar-ia').disabled = true;
+    el('btn-generar-ia').textContent = 'Generando...';
+    el('ia-estado').classList.remove('oculto', 'exito', 'error');
+    el('ia-estado').textContent = 'Generando preguntas con IA, esto puede tardar unos segundos...';
+
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        mostrarResultadoCarga(el('ia-estado'), resultado);
+        el('btn-generar-ia').disabled = false;
+        el('btn-generar-ia').textContent = 'Generar preguntas';
+        cargarListaJuegos();
+      })
+      .withFailureHandler(function (error) {
+        el('ia-estado').classList.remove('exito');
+        el('ia-estado').classList.add('error');
+        el('ia-estado').textContent = 'Error: ' + error.message;
+        el('btn-generar-ia').disabled = false;
+        el('btn-generar-ia').textContent = 'Generar preguntas';
+      })
+      .generarPreguntasConIA(estadoDocente.token, juegoParaGenerarIA.codigo, edad);
+  });
+
+  // ---------------------------------------------------------------
+  // Tabla "Mis juegos"
+  // ---------------------------------------------------------------
+  function cargarListaJuegos() {
+    google.script.run
+      .withSuccessHandler(renderizarTablaJuegos)
+      .withFailureHandler(function (error) { alert('No se pudo cargar la lista de juegos: ' + error.message); })
+      .listarJuegosDocente(estadoDocente.token);
+  }
+
+  function describirTiempo(juego) {
+    if (juego.modo === 'vivo') {
+      var avanceTexto = juego.avanceVivo === 'manual' ? 'avance manual' : 'avance automático';
+      return '🔴 En vivo · ⏱ ' + juego.segundosPorPregunta + 's/pregunta · ' + avanceTexto;
+    }
+    return juego.modoTiempo === 'total'
+      ? '⏱ ' + Math.round(juego.duracionTotalSegundos / 60) + ' min totales'
+      : '⏱ ' + juego.segundosPorPregunta + 's/pregunta';
+  }
+
+  function renderizarTablaJuegos(juegos) {
+    var cuerpo = el('tabla-juegos-cuerpo');
+    cuerpo.innerHTML = '';
+    el('sin-juegos').classList.toggle('oculto', juegos.length > 0);
+
+    juegos.forEach(function (juego) {
+      var tr = document.createElement('tr');
+      var estadoTexto = juego.activo ? 'Activo' : 'Inactivo';
+      var estadoClase = juego.activo ? 'activo' : 'inactivo';
+
+      tr.innerHTML =
+        '<td>' + escaparHtml(juego.nombreJuego) + '<br><small>' + describirTiempo(juego) + '</small></td>' +
+        '<td><strong>' + escaparHtml(juego.codigo) + '</strong></td>' +
+        '<td>' + escaparHtml(juego.tematica || '-') + '</td>' +
+        '<td>' + juego.preguntasCargadas + ' / ' + juego.cantidadPreguntas + '</td>' +
+        '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
+        '<td class="celda-acciones"></td>';
+
+      var celdaAcciones = tr.querySelector('.celda-acciones');
+
+      if (juego.modo === 'vivo') {
+        var btnIniciarVivo = document.createElement('button');
+        btnIniciarVivo.type = 'button';
+        btnIniciarVivo.className = 'boton-mini boton-mini-destacado';
+        btnIniciarVivo.textContent = '▶ Iniciar en vivo';
+        btnIniciarVivo.addEventListener('click', function () { abrirHostLobby(juego); });
+        celdaAcciones.appendChild(btnIniciarVivo);
+      }
+
+      var btnEditar = document.createElement('button');
+      btnEditar.type = 'button';
+      btnEditar.className = 'boton-mini';
+      btnEditar.textContent = 'Editar';
+      btnEditar.addEventListener('click', function () { abrirModalEditarJuego(juego); });
+      celdaAcciones.appendChild(btnEditar);
+
+      var btnPreguntas = document.createElement('button');
+      btnPreguntas.type = 'button';
+      btnPreguntas.className = 'boton-mini';
+      btnPreguntas.textContent = 'Preguntas';
+      btnPreguntas.addEventListener('click', function () { abrirModalCargarPreguntas(juego); });
+      celdaAcciones.appendChild(btnPreguntas);
+
+      var btnResultados = document.createElement('button');
+      btnResultados.type = 'button';
+      btnResultados.className = 'boton-mini';
+      btnResultados.textContent = 'Resultados';
+      btnResultados.addEventListener('click', function () { abrirModalResultados(juego); });
+      celdaAcciones.appendChild(btnResultados);
+
+      var btnEstado = document.createElement('button');
+      btnEstado.type = 'button';
+      btnEstado.className = 'boton-mini';
+      btnEstado.textContent = juego.activo ? 'Desactivar' : 'Activar';
+      btnEstado.addEventListener('click', function () { alternarEstadoJuego(juego); });
+      celdaAcciones.appendChild(btnEstado);
+
+      var btnCopiar = document.createElement('button');
+      btnCopiar.type = 'button';
+      btnCopiar.className = 'boton-mini';
+      btnCopiar.textContent = 'Copiar código';
+      btnCopiar.addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(juego.codigo);
+        }
+      });
+      celdaAcciones.appendChild(btnCopiar);
+
+      cuerpo.appendChild(tr);
+    });
+  }
+
+  function alternarEstadoJuego(juego) {
+    google.script.run
+      .withSuccessHandler(cargarListaJuegos)
+      .withFailureHandler(function (error) { alert('Error: ' + error.message); })
+      .alternarActivoJuego(estadoDocente.token, juego.codigo, !juego.activo);
+  }
+
+  // ---------------------------------------------------------------
+  // Modal: editar un juego existente
+  // ---------------------------------------------------------------
+  var codigoEnEdicion = null;
+
+  function actualizarCamposTiempoEditar() {
+    var esVivo = document.querySelector('input[name="ej-modo"]:checked').value === 'vivo';
+    var esTotal = document.querySelector('input[name="ej-modo-tiempo"]:checked').value === 'total';
+    el('ej-grupo-modo-tiempo').classList.toggle('oculto', esVivo);
+    el('ej-grupo-avance-vivo').classList.toggle('oculto', !esVivo);
+    el('ej-campo-segundos-pregunta').classList.toggle('oculto', !esVivo && esTotal);
+    el('ej-campo-duracion-total').classList.toggle('oculto', esVivo || !esTotal);
+  }
+  document.querySelectorAll('input[name="ej-modo-tiempo"], input[name="ej-modo"]').forEach(function (radio) {
+    radio.addEventListener('change', actualizarCamposTiempoEditar);
+  });
+
+  function abrirModalEditarJuego(juego) {
+    codigoEnEdicion = juego.codigo;
+    el('error-editar-juego').classList.add('oculto');
+    el('editar-juego-codigo').textContent = juego.codigo;
+
+    el('ej-nombre').value = juego.nombreJuego;
+    el('ej-tematica').value = juego.tematica || '';
+    el('ej-profesor').value = juego.profesor || '';
+    el('ej-cantidad').value = juego.cantidadPreguntas;
+    document.querySelector('input[name="ej-modo"][value="' + (juego.modo || 'individual') + '"]').checked = true;
+    document.querySelector('input[name="ej-modo-tiempo"][value="' + (juego.modoTiempo || 'porPregunta') + '"]').checked = true;
+    document.querySelector('input[name="ej-avance-vivo"][value="' + (juego.avanceVivo || 'automatico') + '"]').checked = true;
+    el('ej-segundos-pregunta').value = juego.segundosPorPregunta || 45;
+    el('ej-duracion-total').value = Math.round((juego.duracionTotalSegundos || 600) / 60);
+    el('ej-ayuda-cincuenta').checked = !!(juego.ayudas && juego.ayudas.cincuenta);
+    el('ej-ayuda-llamada').checked = !!(juego.ayudas && juego.ayudas.llamada);
+    el('ej-ayuda-publico').checked = !!(juego.ayudas && juego.ayudas.publico);
+    actualizarCamposTiempoEditar();
+
+    el('modal-editar-juego').classList.remove('oculto');
+  }
+
+  el('cerrar-modal-editar-juego').addEventListener('click', function () {
+    el('modal-editar-juego').classList.add('oculto');
+  });
+
+  el('form-editar-juego').addEventListener('submit', function (e) {
+    e.preventDefault();
+    el('error-editar-juego').classList.add('oculto');
+
+    var datos = {
+      nombreJuego: el('ej-nombre').value.trim(),
+      tematica: el('ej-tematica').value.trim(),
+      profesor: el('ej-profesor').value.trim(),
+      cantidadPreguntas: el('ej-cantidad').value,
+      modo: document.querySelector('input[name="ej-modo"]:checked').value,
+      modoTiempo: document.querySelector('input[name="ej-modo-tiempo"]:checked').value,
+      avanceVivo: document.querySelector('input[name="ej-avance-vivo"]:checked').value,
+      segundosPorPregunta: el('ej-segundos-pregunta').value,
+      duracionTotalMinutos: el('ej-duracion-total').value,
+      ayudas: {
+        cincuenta: el('ej-ayuda-cincuenta').checked,
+        llamada: el('ej-ayuda-llamada').checked,
+        publico: el('ej-ayuda-publico').checked
+      }
+    };
+
+    google.script.run
+      .withSuccessHandler(function () {
+        el('modal-editar-juego').classList.add('oculto');
+        cargarListaJuegos();
+      })
+      .withFailureHandler(function (error) {
+        el('error-editar-juego').textContent = error.message;
+        el('error-editar-juego').classList.remove('oculto');
+      })
+      .actualizarJuego(estadoDocente.token, codigoEnEdicion, datos);
+  });
+
+  // ---------------------------------------------------------------
+  // Modal: cargar preguntas de un juego existente
+  // ---------------------------------------------------------------
+  function abrirModalCargarPreguntas(juego) {
+    juegoModalActual = juego;
+    el('modal-cargar-nombre-juego').textContent = juego.nombreJuego + ' (' + juego.codigo + ')';
+    el('resultado-import-modal').classList.add('oculto');
+    el('input-archivo-modal').value = '';
+    el('modal-cargar-preguntas').classList.remove('oculto');
+  }
+  el('cerrar-modal-cargar-preguntas').addEventListener('click', function () {
+    el('modal-cargar-preguntas').classList.add('oculto');
+  });
+
+  // ---------------------------------------------------------------
+  // Modal: resultados
+  // ---------------------------------------------------------------
+  function abrirModalResultados(juego) {
+    el('modal-resultados-nombre-juego').textContent = juego.nombreJuego + ' (' + juego.codigo + ')';
+    el('tabla-resultados-cuerpo').innerHTML = '';
+    el('sin-resultados').classList.add('oculto');
+    el('modal-resultados').classList.remove('oculto');
+
+    google.script.run
+      .withSuccessHandler(function (resultados) {
+        el('sin-resultados').classList.toggle('oculto', resultados.length > 0);
+        var cuerpo = el('tabla-resultados-cuerpo');
+        resultados.forEach(function (r) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + escaparHtml(r.nombreEstudiante) + '</td>' +
+            '<td>' + r.puntaje + ' / ' + r.totalPreguntas + '</td>' +
+            '<td>' + escaparHtml(r.resultado) + '</td>' +
+            '<td>' + formatearFecha(r.fecha) + '</td>';
+          cuerpo.appendChild(tr);
+        });
+      })
+      .withFailureHandler(function (error) { alert('No se pudieron cargar los resultados: ' + error.message); })
+      .obtenerResultadosDocente(estadoDocente.token, juego.codigo);
+  }
+  el('cerrar-modal-resultados').addEventListener('click', function () {
+    el('modal-resultados').classList.add('oculto');
+  });
+
+  // =================================================================
+  // Escalera de progreso (números de pregunta, sin dinero)
+  // =================================================================
+  function construirEscalera() {
+    var lista = el('escalera-lista');
+    lista.innerHTML = '';
+    for (var i = 1; i <= estadoCliente.totalPreguntas; i++) {
+      var li = document.createElement('li');
+      li.className = 'escalera-item';
+      li.id = 'escalon-' + i;
+      li.innerHTML = '<span>Pregunta ' + i + '</span><span class="escalon-marca" id="escalon-marca-' + i + '"></span>';
+      lista.appendChild(li);
+    }
+  }
+
+  function resaltarEscalonActual(numero) {
+    document.querySelectorAll('.escalera-item').forEach(function (li) { li.classList.remove('actual'); });
+    var li = el('escalon-' + numero);
+    if (li) li.classList.add('actual');
+  }
+
+  function marcarEscalon(numero, esCorrecta) {
+    var li = el('escalon-' + numero);
+    if (!li) return;
+    li.classList.remove('actual');
+    li.classList.add(esCorrecta ? 'correcta' : 'incorrecta');
+    var marca = el('escalon-marca-' + numero);
+    if (marca) marca.textContent = esCorrecta ? '✔' : '✘';
+  }
+
+  // =================================================================
+  // Ayudas
+  // =================================================================
+  function resetearAyudas() {
+    var activas = estadoCliente.ayudasActivas || { cincuenta: true, llamada: true, publico: true };
+    ['cincuenta', 'llamada', 'publico'].forEach(function (nombre) {
+      var boton = el('ayuda-' + nombre);
+      var activa = !!activas[nombre];
+      boton.style.display = activa ? '' : 'none';
+      boton.disabled = !activa;
+    });
+  }
+
+  el('ayuda-cincuenta').addEventListener('click', function () {
+    if (this.disabled || estadoCliente.respondiendo) return;
+    this.disabled = true;
+    var cincuentaRun = google.script.run
+      .withSuccessHandler(function (resultado) {
+        resultado.eliminar.forEach(function (letra) {
+          document.querySelector('.boton-opcion[data-letra="' + letra + '"]').classList.add('eliminada');
+        });
+      })
+      .withFailureHandler(manejarErrorAyuda);
+    if (estadoCliente.modoJuego === 'vivo') {
+      cincuentaRun.usarCincuentaVivo(estadoCliente.sessionId, estadoCliente.codigoJuego);
+    } else {
+      cincuentaRun.usarCincuenta(estadoCliente.sessionId);
+    }
+  });
+
+  el('ayuda-llamada').addEventListener('click', function () {
+    if (this.disabled || estadoCliente.respondiendo) return;
+    this.disabled = true;
+    el('modal-llamada').classList.remove('oculto');
+    el('texto-llamada').textContent = '';
+    var segundos = 30;
+    el('cronometro-llamada').textContent = segundos;
+    var intervalo = setInterval(function () {
+      segundos--;
+      el('cronometro-llamada').textContent = segundos > 0 ? segundos : 0;
+      if (segundos <= 0) clearInterval(intervalo);
+    }, 1000);
+
+    var llamadaRun = google.script.run
+      .withSuccessHandler(function (resultado) {
+        setTimeout(function () {
+          clearInterval(intervalo);
+          el('cronometro-llamada').textContent = '0';
+          el('texto-llamada').textContent =
+            'Tu amigo dice: "Yo creo que la respuesta es la ' + resultado.respuestaSugerida +
+            '... tengo un ' + resultado.confianza + '% de seguridad."';
+        }, 3000);
+      })
+      .withFailureHandler(function (error) {
+        clearInterval(intervalo);
+        manejarErrorAyuda(error);
+        el('modal-llamada').classList.add('oculto');
+      });
+    if (estadoCliente.modoJuego === 'vivo') {
+      llamadaRun.usarLlamadaAmigoVivo(estadoCliente.sessionId, estadoCliente.codigoJuego);
+    } else {
+      llamadaRun.usarLlamadaAmigo(estadoCliente.sessionId);
+    }
+  });
+
+  el('cerrar-modal-llamada').addEventListener('click', function () {
+    el('modal-llamada').classList.add('oculto');
+  });
+
+  el('ayuda-publico').addEventListener('click', function () {
+    if (this.disabled || estadoCliente.respondiendo) return;
+    this.disabled = true;
+    var publicoRun = google.script.run
+      .withSuccessHandler(function (resultado) {
+        renderizarGraficaPublico(resultado.porcentajes);
+        el('modal-publico').classList.remove('oculto');
+      })
+      .withFailureHandler(manejarErrorAyuda);
+    if (estadoCliente.modoJuego === 'vivo') {
+      publicoRun.usarPreguntaPublicoVivo(estadoCliente.sessionId, estadoCliente.codigoJuego);
+    } else {
+      publicoRun.usarPreguntaPublico(estadoCliente.sessionId);
+    }
+  });
+
+  el('cerrar-modal-publico').addEventListener('click', function () {
+    el('modal-publico').classList.add('oculto');
+  });
+
+  function renderizarGraficaPublico(porcentajes) {
+    var contenedor = el('grafica-publico');
+    contenedor.innerHTML = '';
+    ['A', 'B', 'C', 'D'].forEach(function (letra) {
+      var pct = porcentajes[letra] || 0;
+      var fila = document.createElement('div');
+      fila.className = 'barra-fila';
+      fila.innerHTML =
+        '<span class="barra-letra">' + letra + '</span>' +
+        '<span class="barra-pista"><span class="barra-relleno" style="width:0%" data-objetivo="' + pct + '"></span></span>' +
+        '<span class="barra-porcentaje">' + pct + '%</span>';
+      contenedor.appendChild(fila);
+    });
+    requestAnimationFrame(function () {
+      contenedor.querySelectorAll('.barra-relleno').forEach(function (barra) {
+        barra.style.width = barra.getAttribute('data-objetivo') + '%';
+      });
+    });
+  }
+
+  function manejarErrorAyuda(error) {
+    alert('No se pudo usar la ayuda: ' + error.message);
+  }
+
+  // =================================================================
+  // Mostrar pregunta y temporizador(es)
+  // =================================================================
+  function mostrarPregunta(pregunta) {
+    estadoCliente.preguntaActual = pregunta;
+    estadoCliente.respondiendo = false;
+
+    el('numero-pregunta').textContent = 'Pregunta ' + pregunta.numero + ' de ' + estadoCliente.totalPreguntas;
+    el('texto-pregunta').textContent = pregunta.pregunta;
+
+    ['A', 'B', 'C', 'D'].forEach(function (letra) {
+      var boton = document.querySelector('.boton-opcion[data-letra="' + letra + '"]');
+      boton.querySelector('.opcion-texto').textContent = pregunta.opciones[letra];
+      boton.classList.remove('correcta', 'incorrecta', 'eliminada');
+      boton.disabled = false;
+    });
+
+    resaltarEscalonActual(pregunta.numero);
+    iniciarTemporizador();
+  }
+
+  function iniciarTemporizador() {
+    if (estadoCliente.modoTiempo === 'total') {
+      iniciarTemporizadorTotal();
+    } else {
+      iniciarTemporizadorPorPregunta();
+    }
+  }
+
+  function actualizarBarraTiempo(restantes, total) {
+    var barra = el('temporizador-barra');
+    var porcentaje = Math.max(0, (restantes / total) * 100);
+    barra.style.width = porcentaje + '%';
+    barra.classList.toggle('alerta', restantes <= Math.min(10, total * 0.2));
+  }
+
+  function iniciarTemporizadorPorPregunta() {
+    detenerTemporizador();
+    estadoCliente.segundosRestantes = estadoCliente.segundosPorPregunta;
+    actualizarBarraTiempo(estadoCliente.segundosRestantes, estadoCliente.segundosPorPregunta);
+    Sonido.iniciarSuspenso();
+
+    estadoCliente.temporizadorId = setInterval(function () {
+      estadoCliente.segundosRestantes--;
+      actualizarBarraTiempo(estadoCliente.segundosRestantes, estadoCliente.segundosPorPregunta);
+      Sonido.actualizarTension(1 - Math.max(0, estadoCliente.segundosRestantes) / estadoCliente.segundosPorPregunta);
+
+      if (estadoCliente.segundosRestantes <= 0) {
+        detenerTemporizador();
+        if (!estadoCliente.respondiendo) seleccionarOpcion(null);
+      }
+    }, 1000);
+  }
+
+  // El reloj de "tiempo total" arranca una sola vez (en la primera pregunta)
+  // y sigue corriendo de fondo entre preguntas, sin reiniciarse.
+  function iniciarTemporizadorTotal() {
+    if (estadoCliente.temporizadorId) return;
+    estadoCliente.segundosRestantes = estadoCliente.duracionTotalSegundos;
+    actualizarBarraTiempo(estadoCliente.segundosRestantes, estadoCliente.duracionTotalSegundos);
+    Sonido.iniciarSuspenso();
+
+    estadoCliente.temporizadorId = setInterval(function () {
+      estadoCliente.segundosRestantes--;
+      actualizarBarraTiempo(estadoCliente.segundosRestantes, estadoCliente.duracionTotalSegundos);
+      Sonido.actualizarTension(1 - Math.max(0, estadoCliente.segundosRestantes) / estadoCliente.duracionTotalSegundos);
+
+      if (estadoCliente.segundosRestantes <= 0) {
+        clearInterval(estadoCliente.temporizadorId);
+        estadoCliente.temporizadorId = null;
+        Sonido.detenerSuspenso();
+        estadoCliente.tiempoAgotado = true;
+        if (!estadoCliente.respondiendo) finalizarPorTiempoAgotado();
+      }
+    }, 1000);
+  }
+
+  function detenerTemporizador() {
+    if (estadoCliente.temporizadorId) {
+      clearInterval(estadoCliente.temporizadorId);
+      estadoCliente.temporizadorId = null;
+    }
+    Sonido.detenerSuspenso();
+  }
+
+  function finalizarPorTiempoAgotado() {
+    detenerTemporizador();
+    document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        mostrarFinal('tiempo', resultado.puntajeFinal, resultado.totalPreguntas);
+      })
+      .withFailureHandler(function () {
+        mostrarPantalla('pantalla-estudiante-ingreso');
+      })
+      .finalizarPorTiempo(estadoCliente.sessionId);
+  }
+
+  // =================================================================
+  // Responder pregunta
+  // =================================================================
+  var ESPERA_MINIMA_SUSPENSO_MS = 1400;
+
+  document.querySelectorAll('.boton-opcion').forEach(function (boton) {
+    boton.addEventListener('click', function () {
+      if (estadoCliente.respondiendo) return;
+      if (estadoCliente.modoJuego === 'vivo') {
+        seleccionarOpcionVivo(boton.getAttribute('data-letra'));
+      } else {
+        seleccionarOpcion(boton.getAttribute('data-letra'));
+      }
+    });
+  });
+
+  function seleccionarOpcion(letra) {
+    estadoCliente.respondiendo = true;
+    // En modo "tiempo total" el reloj de la sesión sigue corriendo mientras
+    // se revela la respuesta; en modo "por pregunta" se detiene por completo.
+    if (estadoCliente.modoTiempo !== 'total') {
+      detenerTemporizador();
+    }
+    Sonido.redobleRespuesta();
+    var inicioRedoble = Date.now();
+
+    document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        var esperaRestante = Math.max(0, ESPERA_MINIMA_SUSPENSO_MS - (Date.now() - inicioRedoble));
+
+        setTimeout(function () {
+          var botonElegido = letra ? document.querySelector('.boton-opcion[data-letra="' + letra + '"]') : null;
+          var botonCorrecto = document.querySelector('.boton-opcion[data-letra="' + resultado.respuestaCorrecta + '"]');
+
+          if (resultado.esCorrecta) {
+            botonElegido.classList.add('correcta');
+            Sonido.correcto();
+          } else {
+            if (botonElegido) botonElegido.classList.add('incorrecta');
+            botonCorrecto.classList.add('correcta');
+            Sonido.incorrecto();
+          }
+          marcarEscalon(resultado.numero, resultado.esCorrecta);
+
+          setTimeout(function () {
+            if (estadoCliente.tiempoAgotado) {
+              finalizarPorTiempoAgotado();
+            } else if (resultado.juegoTerminado) {
+              mostrarFinal(resultado.motivo, resultado.puntajeFinal, resultado.totalPreguntas);
+            } else {
+              mostrarPregunta(resultado.siguientePregunta);
+            }
+          }, 2000);
+        }, esperaRestante);
+      })
+      .withFailureHandler(function (error) {
+        alert('Ocurrió un error: ' + error.message);
+        estadoCliente.respondiendo = false;
+      })
+      .responderPregunta(estadoCliente.sessionId, letra);
+  }
+
+  // =================================================================
+  // Terminar antes de tiempo
+  // =================================================================
+  el('btn-retirarse').addEventListener('click', function () {
+    if (estadoCliente.respondiendo || !estadoCliente.sessionId) return;
+    if (!confirm('¿Seguro que quieres terminar la partida ahora y ver tu puntaje?')) return;
+
+    detenerTemporizador();
+    document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+
+    google.script.run
+      .withSuccessHandler(function (resultado) {
+        Sonido.retirada();
+        mostrarFinal('retirado', resultado.puntajeFinal, resultado.totalPreguntas);
+      })
+      .withFailureHandler(function (error) {
+        alert('Ocurrió un error: ' + error.message);
+      })
+      .terminarPartida(estadoCliente.sessionId);
+  });
+
+  // =================================================================
+  // Pantalla final
+  // =================================================================
+  var TITULOS_FINAL = {
+    perfecto: '¡Respondiste todas las preguntas correctamente!',
+    fallo: 'Fin del juego',
+    tiempo: 'Se acabó el tiempo',
+    completado: 'Juego terminado',
+    retirado: 'Terminaste la partida'
+  };
+
+  function mostrarFinal(motivo, puntaje, total) {
+    detenerTemporizador();
+    if (motivo === 'perfecto') Sonido.finalGanador();
+
+    el('titulo-final').textContent = TITULOS_FINAL[motivo] || 'Juego terminado';
+    el('premio-final-valor').textContent = puntaje + ' / ' + total;
+    el('jugador-final').textContent = estadoCliente.nombreJugador;
+    mostrarPantalla('pantalla-final');
+  }
+
+  el('btn-jugar-de-nuevo').addEventListener('click', function () {
+    detenerPollEstudianteVivo();
+    estadoCliente.sessionId = null;
+    estadoCliente.preguntaActual = null;
+    el('input-nombre').value = '';
+    el('input-codigo').value = '';
+    mostrarPantalla('pantalla-estudiante-ingreso');
+  });
+
+  // =================================================================
+  // MODO EN VIVO: ESTUDIANTE (lobby + sondeo de pregunta/revelado/final)
+  // =================================================================
+  var INTERVALO_SONDEO_MS = 1800;
+
+  function entrarALobbyVivo(datos) {
+    estadoCliente.modoJuego = 'vivo';
+    estadoCliente.sessionId = datos.sessionId;
+    estadoCliente.codigoJuego = datos.codigoJuego;
+    estadoCliente.nombreJugador = datos.nombreJugador;
+    vivoEstudiante.indiceMostrado = -1;
+    vivoEstudiante.faseRevelandoMostrada = false;
+
+    el('lobby-estudiante-nombre-juego').textContent = datos.nombreJuego;
+    el('lobby-estudiante-numero').textContent = '1';
+    mostrarPantalla('pantalla-estudiante-lobby-vivo');
+
+    detenerPollEstudianteVivo();
+    vivoEstudiante.pollId = setInterval(pollEstudianteVivo, INTERVALO_SONDEO_MS);
+    pollEstudianteVivo();
+  }
+
+  function detenerPollEstudianteVivo() {
+    if (vivoEstudiante.pollId) {
+      clearInterval(vivoEstudiante.pollId);
+      vivoEstudiante.pollId = null;
+    }
+  }
+
+  function pollEstudianteVivo() {
+    google.script.run
+      .withSuccessHandler(procesarEstadoEstudianteVivo)
+      .withFailureHandler(function (error) {
+        detenerPollEstudianteVivo();
+        alert('Se perdió la conexión con la partida en vivo: ' + error.message);
+        mostrarPantalla('pantalla-estudiante-ingreso');
+      })
+      .obtenerEstadoEstudianteVivo(estadoCliente.sessionId, estadoCliente.codigoJuego);
+  }
+
+  function procesarEstadoEstudianteVivo(estado) {
+    estadoCliente.totalPreguntas = estado.totalPreguntas;
+    estadoCliente.ayudasActivas = estado.ayudasActivas || estadoCliente.ayudasActivas;
+
+    if (estado.estadoJuego === 'lobby') {
+      el('lobby-estudiante-numero').textContent = estado.numeroJugadores;
+      return;
+    }
+
+    if (estado.estadoJuego === 'pregunta') {
+      el('overlay-revelando-vivo').classList.add('oculto');
+      vivoEstudiante.faseRevelandoMostrada = false;
+
+      if (!document.getElementById('pantalla-juego').classList.contains('activa')) {
+        construirEscalera();
+        resetearAyudas();
+        el('jugador-nombre-juego').textContent = estadoCliente.nombreJugador;
+        el('etiqueta-juego-actual').textContent = 'En vivo';
+        el('btn-retirarse').style.display = 'none';
+        mostrarPantalla('pantalla-juego');
+      }
+
+      if (estado.indiceActual !== vivoEstudiante.indiceMostrado) {
+        vivoEstudiante.indiceMostrado = estado.indiceActual;
+        mostrarPreguntaVivo(estado);
+      } else {
+        actualizarBarraTiempo(estado.segundosRestantes, estado.segundosPorPregunta);
+        Sonido.actualizarTension(1 - Math.max(0, estado.segundosRestantes) / estado.segundosPorPregunta);
+      }
+
+      if (estado.yaRespondio) {
+        document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+      }
+      return;
+    }
+
+    if (estado.estadoJuego === 'revelando') {
+      Sonido.detenerSuspenso();
+      if (!vivoEstudiante.faseRevelandoMostrada) {
+        vivoEstudiante.faseRevelandoMostrada = true;
+        mostrarRevelandoVivo(estado);
+      }
+      return;
+    }
+
+    if (estado.estadoJuego === 'finalizado') {
+      detenerPollEstudianteVivo();
+      mostrarFinalVivo(estado);
+    }
+  }
+
+  function mostrarPreguntaVivo(estado) {
+    var pregunta = estado.pregunta;
+    estadoCliente.respondiendo = false;
+    estadoCliente.segundosPorPregunta = estado.segundosPorPregunta;
+
+    el('numero-pregunta').textContent = 'Pregunta ' + pregunta.numero + ' de ' + estadoCliente.totalPreguntas;
+    el('texto-pregunta').textContent = pregunta.pregunta;
+
+    ['A', 'B', 'C', 'D'].forEach(function (letra) {
+      var boton = document.querySelector('.boton-opcion[data-letra="' + letra + '"]');
+      boton.querySelector('.opcion-texto').textContent = pregunta.opciones[letra];
+      boton.classList.remove('correcta', 'incorrecta', 'eliminada');
+      boton.disabled = false;
+    });
+
+    resaltarEscalonActual(pregunta.numero);
+    actualizarBarraTiempo(estado.segundosRestantes, estado.segundosPorPregunta);
+    Sonido.iniciarSuspenso();
+  }
+
+  function seleccionarOpcionVivo(letra) {
+    if (estadoCliente.respondiendo) return;
+    estadoCliente.respondiendo = true;
+    document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+    var boton = document.querySelector('.boton-opcion[data-letra="' + letra + '"]');
+    if (boton) boton.classList.add('actual');
+
+    google.script.run
+      .withSuccessHandler(function () { /* la corrección llega en el siguiente sondeo, al revelar */ })
+      .withFailureHandler(function (error) {
+        alert('No se pudo registrar tu respuesta: ' + error.message);
+        estadoCliente.respondiendo = false;
+        document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = false; });
+      })
+      .responderPreguntaVivo(estadoCliente.sessionId, estadoCliente.codigoJuego, letra);
+  }
+
+  function mostrarRevelandoVivo(estado) {
+    detenerTemporizador();
+    document.querySelectorAll('.boton-opcion').forEach(function (b) { b.disabled = true; });
+    var botonPropio = estado.tuRespuesta
+      ? document.querySelector('.boton-opcion[data-letra="' + estado.tuRespuesta + '"]')
+      : null;
+    var botonCorrecto = document.querySelector('.boton-opcion[data-letra="' + estado.respuestaCorrecta + '"]');
+    if (botonCorrecto) botonCorrecto.classList.add('correcta');
+    if (botonPropio && !estado.esCorrecta) botonPropio.classList.add('incorrecta');
+    marcarEscalon(vivoEstudiante.indiceMostrado + 1, estado.esCorrecta);
+
+    if (estado.esCorrecta) Sonido.correcto(); else Sonido.incorrecto();
+
+    el('revelando-vivo-titulo').textContent = estado.tuRespuesta
+      ? (estado.esCorrecta ? '¡Correcto!' : 'Incorrecto')
+      : 'Se acabó el tiempo';
+    el('revelando-vivo-puntos').textContent = estado.esCorrecta
+      ? '+' + estado.puntosGanados + ' puntos · Puntaje total: ' + estado.puntajeTotal
+      : 'Puntaje total: ' + estado.puntajeTotal;
+    el('revelando-vivo-posicion').textContent = estado.tuPosicion
+      ? 'Vas de puesto #' + estado.tuPosicion
+      : '';
+    renderizarListaRanking(el('revelando-vivo-ranking'), estado.ranking);
+
+    el('overlay-revelando-vivo').classList.remove('oculto');
+  }
+
+  function mostrarFinalVivo(estado) {
+    detenerTemporizador();
+    el('overlay-revelando-vivo').classList.add('oculto');
+    el('titulo-final').textContent = '🏆 Juego en vivo terminado';
+    var yo = estado.ranking.filter(function (r) { return r.nombre === estadoCliente.nombreJugador; })[0];
+    el('premio-final-valor').textContent = yo ? yo.puntaje + ' puntos' : '0 puntos';
+    el('jugador-final').textContent = estadoCliente.nombreJugador;
+    el('final-tu-posicion').textContent = estado.tuPosicion ? 'Terminaste en el puesto #' + estado.tuPosicion : '';
+    el('final-tu-posicion').classList.remove('oculto');
+    el('final-ranking').classList.remove('oculto');
+    renderizarListaRanking(el('final-ranking'), estado.ranking);
+    if (estado.tuPosicion === 1) Sonido.finalGanador();
+    mostrarPantalla('pantalla-final');
+  }
+
+  function renderizarListaRanking(contenedor, ranking) {
+    contenedor.innerHTML = '';
+    ranking.forEach(function (r) {
+      var li = document.createElement('li');
+      li.innerHTML =
+        '<span class="puesto-ranking">' + escaparHtml(r.nombre) + '</span>' +
+        '<span>' + r.puntaje + ' pts</span>';
+      contenedor.appendChild(li);
+    });
+  }
+
+  // =================================================================
+  // MODO EN VIVO: HOST (el profesor proyecta esta pantalla)
+  // =================================================================
+  function abrirHostLobby(juego) {
+    google.script.run
+      .withSuccessHandler(function (datos) {
+        estadoHost.hostToken = datos.hostToken;
+        estadoHost.codigo = datos.codigo;
+        estadoHost.nombreJuego = datos.nombreJuego;
+        estadoHost.indiceMostrado = -1;
+        estadoHost.faseRevelandoMostrada = false;
+
+        el('host-lobby-nombre-juego').textContent = datos.nombreJuego;
+        el('host-lobby-codigo').textContent = datos.codigo;
+        el('host-lobby-numero').textContent = '0';
+        el('host-lobby-jugadores').innerHTML = '';
+        mostrarPantalla('pantalla-host-lobby');
+
+        detenerPollHost();
+        estadoHost.pollId = setInterval(pollHostLobby, INTERVALO_SONDEO_MS);
+        pollHostLobby();
+      })
+      .withFailureHandler(function (error) { alert('No se pudo iniciar la sesión en vivo: ' + error.message); })
+      .iniciarSesionVivo(estadoDocente.token, juego.codigo);
+  }
+
+  function detenerPollHost() {
+    if (estadoHost.pollId) {
+      clearInterval(estadoHost.pollId);
+      estadoHost.pollId = null;
+    }
+  }
+
+  function pollHostLobby() {
+    google.script.run
+      .withSuccessHandler(function (estado) {
+        el('host-lobby-numero').textContent = estado.numeroJugadores;
+        el('host-lobby-jugadores').innerHTML = estado.nombresJugadores.map(function (n) {
+          return '<span class="chip-jugador">' + escaparHtml(n) + '</span>';
+        }).join('');
+      })
+      .withFailureHandler(function () { /* se reintenta en el próximo sondeo */ })
+      .obtenerEstadoHost(estadoHost.hostToken, estadoHost.codigo);
+  }
+
+  el('btn-host-iniciar-juego').addEventListener('click', function () {
+    detenerPollHost();
+    google.script.run
+      .withSuccessHandler(function () {
+        mostrarPantalla('pantalla-host-juego');
+        estadoHost.pollId = setInterval(pollHostJuego, INTERVALO_SONDEO_MS);
+        pollHostJuego();
+      })
+      .withFailureHandler(function (error) { alert('No se pudo iniciar el juego: ' + error.message); })
+      .iniciarPreguntaVivo(estadoHost.hostToken, estadoHost.codigo);
+  });
+
+  function pollHostJuego() {
+    google.script.run
+      .withSuccessHandler(procesarEstadoHost)
+      .withFailureHandler(function (error) {
+        detenerPollHost();
+        alert('Se perdió la conexión con la sesión en vivo: ' + error.message);
+        mostrarPantalla('pantalla-docente-panel');
+        cargarListaJuegos();
+      })
+      .obtenerEstadoHost(estadoHost.hostToken, estadoHost.codigo);
+  }
+
+  function procesarEstadoHost(estado) {
+    el('host-nombre-juego').textContent = estadoHost.nombreJuego;
+    el('host-numero-pregunta').textContent = estado.indiceActual >= 0
+      ? 'Pregunta ' + (estado.indiceActual + 1) + ' de ' + estado.totalPreguntas
+      : '';
+    el('host-numero-jugadores').textContent = estado.numeroJugadores + ' jugador(es)';
+
+    if (estado.estadoJuego === 'pregunta') {
+      el('host-vista-pregunta').classList.remove('oculto');
+      el('host-vista-revelando').classList.add('oculto');
+      el('host-vista-final').classList.add('oculto');
+
+      el('host-texto-pregunta').textContent = estado.pregunta.pregunta;
+      ['A', 'B', 'C', 'D'].forEach(function (letra) {
+        document.querySelector('.opcion-host[data-letra="' + letra + '"] .opcion-texto').textContent = estado.pregunta.opciones[letra];
+      });
+      var barra = el('host-temporizador-barra');
+      var pct = Math.max(0, (estado.segundosRestantes / estado.segundosPorPregunta) * 100);
+      barra.style.width = pct + '%';
+      barra.classList.toggle('alerta', estado.segundosRestantes <= Math.min(10, estado.segundosPorPregunta * 0.2));
+      el('host-respuestas-recibidas').textContent = estado.respuestasRecibidas;
+      el('host-total-jugadores-pregunta').textContent = estado.numeroJugadores;
+      estadoHost.faseRevelandoMostrada = false;
+    } else if (estado.estadoJuego === 'revelando') {
+      el('host-vista-pregunta').classList.add('oculto');
+      el('host-vista-revelando').classList.remove('oculto');
+      el('host-vista-final').classList.add('oculto');
+
+      el('host-revelando-texto-pregunta').textContent = estado.pregunta.pregunta;
+      renderizarOpcionesRevelandoHost(estado.pregunta.opciones, estado.distribucionRespuestas, estado.respuestaCorrecta);
+      renderizarListaRanking(el('host-ranking'), estado.ranking);
+
+      var mensajeAuto = el('host-mensaje-avance-automatico');
+      var botonSiguiente = el('btn-host-siguiente');
+      if (estado.avance === 'automatico') {
+        mensajeAuto.classList.remove('oculto');
+        mensajeAuto.textContent = 'Avanzando automáticamente en ' + (estado.segundosParaAvanzar || 0) + 's...';
+        botonSiguiente.classList.add('oculto');
+      } else {
+        mensajeAuto.classList.add('oculto');
+        botonSiguiente.classList.remove('oculto');
+      }
+    } else if (estado.estadoJuego === 'finalizado') {
+      detenerPollHost();
+      el('host-vista-pregunta').classList.add('oculto');
+      el('host-vista-revelando').classList.add('oculto');
+      el('host-vista-final').classList.remove('oculto');
+      renderizarListaRanking(el('host-ranking-final'), estado.ranking);
+    }
+  }
+
+  function renderizarOpcionesRevelandoHost(opciones, distribucion, respuestaCorrecta) {
+    ['A', 'B', 'C', 'D'].forEach(function (letra) {
+      var caja = document.querySelector('#host-revelando-opciones .opcion-host[data-letra="' + letra + '"]');
+      caja.querySelector('.opcion-texto').textContent = opciones[letra];
+      caja.querySelector('.opcion-conteo').textContent = (distribucion[letra] || 0) + ' voto(s)';
+      caja.classList.toggle('opcion-host-correcta', letra === respuestaCorrecta);
+    });
+  }
+
+  el('btn-host-revelar-ahora').addEventListener('click', function () {
+    google.script.run
+      .withSuccessHandler(procesarEstadoHost)
+      .withFailureHandler(function (error) { alert('Error: ' + error.message); })
+      .revelarAhoraVivo(estadoHost.hostToken, estadoHost.codigo);
+  });
+
+  el('btn-host-siguiente').addEventListener('click', function () {
+    google.script.run
+      .withSuccessHandler(procesarEstadoHost)
+      .withFailureHandler(function (error) { alert('Error: ' + error.message); })
+      .iniciarPreguntaVivo(estadoHost.hostToken, estadoHost.codigo);
+  });
+
+  function terminarSesionVivoHost() {
+    if (!confirm('¿Terminar el juego en vivo ahora y mostrar los resultados finales?')) return;
+    google.script.run
+      .withSuccessHandler(procesarEstadoHost)
+      .withFailureHandler(function (error) { alert('Error: ' + error.message); })
+      .finalizarSesionVivoManual(estadoHost.hostToken, estadoHost.codigo);
+  }
+  el('btn-host-terminar').addEventListener('click', terminarSesionVivoHost);
+  el('btn-host-terminar-2').addEventListener('click', terminarSesionVivoHost);
+
+  el('btn-host-volver-panel').addEventListener('click', function () {
+    detenerPollHost();
+    mostrarPantalla('pantalla-docente-panel');
+    cargarListaJuegos();
+  });
+
+})();
+</script>

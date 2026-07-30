@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>¿Quién Sabe Más?</title>
+  <?!= include('style'); ?>
+</head>
+<body>
+
+  <div class="fondo-estrellas"></div>
+
+  <!-- ============ PANTALLA: ELEGIR ROL ============ -->
+  <section id="pantalla-rol" class="pantalla activa">
+    <div class="contenedor-inicio">
+      <h1 class="logo-juego">
+        <span class="logo-signo">¿</span>QUIÉN SABE MÁS<span class="logo-signo">?</span>
+      </h1>
+      <p class="subtitulo-inicio">La plataforma de trivia estilo "Millonario" para el salón de clase</p>
+
+      <div class="tarjeta-inicio tarjeta-rol">
+        <button id="btn-rol-estudiante" class="boton-dorado boton-rol">Soy estudiante</button>
+        <button id="btn-rol-profesor" class="boton-secundario boton-rol">Soy profesor</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: INGRESO ESTUDIANTE ============ -->
+  <section id="pantalla-estudiante-ingreso" class="pantalla">
+    <div class="contenedor-inicio">
+      <button class="boton-volver" data-volver="pantalla-rol">&larr; Volver</button>
+      <h1 class="logo-juego logo-chico">
+        <span class="logo-signo">¿</span>QUIÉN SABE MÁS<span class="logo-signo">?</span>
+      </h1>
+      <p class="subtitulo-inicio">Ingresa el código que te dio tu profesor</p>
+
+      <div class="tarjeta-inicio">
+        <label for="input-codigo" class="etiqueta-nombre">Código del juego</label>
+        <input type="text" id="input-codigo" maxlength="6" placeholder="Ej: A3F9K2" autocomplete="off" class="input-codigo">
+
+        <label for="input-nombre" class="etiqueta-nombre">Tu nombre</label>
+        <input type="text" id="input-nombre" maxlength="40" placeholder="Tu nombre..." autocomplete="off">
+
+        <button id="btn-comenzar" class="boton-dorado">Ingresar al juego</button>
+        <p id="error-estudiante" class="mensaje-error oculto"></p>
+      </div>
+
+      <div class="reglas-inicio">
+        <p>Dificultad ascendente &middot; ayudas configuradas por tu profesor</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: LOGIN PROFESOR ============ -->
+  <section id="pantalla-docente-login" class="pantalla">
+    <div class="contenedor-inicio">
+      <button class="boton-volver" data-volver="pantalla-rol">&larr; Volver</button>
+      <h1 class="logo-juego logo-chico">Panel del profesor</h1>
+      <p class="subtitulo-inicio">Ingresa la contraseña para crear y administrar juegos</p>
+
+      <div class="tarjeta-inicio">
+        <label for="input-password-docente" class="etiqueta-nombre">Contraseña</label>
+        <input type="password" id="input-password-docente" placeholder="••••••••" autocomplete="off">
+        <button id="btn-login-docente" class="boton-dorado">Ingresar</button>
+        <p id="error-docente-login" class="mensaje-error oculto"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: PANEL DOCENTE ============ -->
+  <section id="pantalla-docente-panel" class="pantalla">
+    <div class="contenedor-panel">
+      <header class="cabecera-panel">
+        <h1 class="titulo-panel">Panel del profesor</h1>
+        <button id="btn-cerrar-sesion-docente" class="boton-secundario boton-chico">Cerrar sesión</button>
+      </header>
+
+      <div class="tarjeta-panel">
+        <h2 class="subtitulo-panel">Crear nuevo juego</h2>
+
+        <div class="fila-botones-modal fila-probar-ia">
+          <button type="button" id="btn-probar-ia" class="boton-secundario boton-chico">✨ Probar conexión con la IA</button>
+          <span id="resultado-probar-ia" class="mensaje-import oculto"></span>
+        </div>
+
+        <form id="form-crear-juego" class="formulario-juego">
+          <div class="campo-formulario">
+            <label for="cj-nombre">Nombre del juego</label>
+            <input type="text" id="cj-nombre" maxlength="60" placeholder="Ej: Matemáticas 10A - Corte 2" required>
+          </div>
+          <div class="campo-formulario">
+            <label for="cj-tematica">Temática</label>
+            <input type="text" id="cj-tematica" maxlength="60" placeholder="Ej: Álgebra, Cultura general, Historia...">
+          </div>
+          <div class="campo-formulario">
+            <label for="cj-profesor">Tu nombre (opcional)</label>
+            <input type="text" id="cj-profesor" maxlength="60" placeholder="Ej: Prof. Ramírez">
+          </div>
+          <div class="campo-formulario">
+            <label for="cj-cantidad">Cantidad de preguntas (1 a 100)</label>
+            <input type="number" id="cj-cantidad" min="1" max="100" value="15" required>
+          </div>
+          <div class="campo-formulario">
+            <label>Modo de juego</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="cj-modo" value="individual" checked> Individual (cada estudiante juega a su ritmo)</label>
+              <label class="radio-linea"><input type="radio" name="cj-modo" value="vivo"> En vivo y sincronizado (todos responden la misma pregunta a la vez)</label>
+            </div>
+          </div>
+          <div class="campo-formulario" id="cj-grupo-modo-tiempo">
+            <label>¿Cómo funciona el tiempo?</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="cj-modo-tiempo" value="porPregunta" checked> Tiempo por pregunta (si se acaba o falla, termina el juego)</label>
+              <label class="radio-linea"><input type="radio" name="cj-modo-tiempo" value="total"> Tiempo total de la sesión (el puntaje es la cantidad de preguntas contestadas bien)</label>
+            </div>
+          </div>
+          <div class="campo-formulario oculto" id="cj-grupo-avance-vivo">
+            <label>¿Cómo avanza el juego entre preguntas?</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="cj-avance-vivo" value="automatico" checked> Automático por tiempo (se revela y avanza solo)</label>
+              <label class="radio-linea"><input type="radio" name="cj-avance-vivo" value="manual"> El profesor avanza manualmente (para comentar cada pregunta)</label>
+            </div>
+          </div>
+          <div class="campo-formulario" id="campo-segundos-pregunta">
+            <label for="cj-segundos-pregunta">Segundos por pregunta</label>
+            <input type="number" id="cj-segundos-pregunta" min="5" max="300" value="45">
+          </div>
+          <div class="campo-formulario oculto" id="campo-duracion-total">
+            <label for="cj-duracion-total">Duración total de la sesión (minutos)</label>
+            <input type="number" id="cj-duracion-total" min="1" max="120" value="10">
+          </div>
+          <div class="campo-formulario">
+            <label>Ayudas activas</label>
+            <div class="opciones-checkbox">
+              <label class="checkbox-linea"><input type="checkbox" id="cj-ayuda-cincuenta" checked> 50/50</label>
+              <label class="checkbox-linea"><input type="checkbox" id="cj-ayuda-llamada" checked> Llamada a un amigo</label>
+              <label class="checkbox-linea"><input type="checkbox" id="cj-ayuda-publico" checked> Pregunta al público</label>
+            </div>
+          </div>
+          <button type="submit" class="boton-dorado">Crear juego</button>
+          <p id="error-crear-juego" class="mensaje-error oculto"></p>
+        </form>
+
+        <div id="juego-recien-creado" class="caja-codigo-generado oculto">
+          <p class="etiqueta-codigo-generado">Código del juego</p>
+          <p class="codigo-generado" id="codigo-generado-texto"></p>
+          <p class="ayuda-codigo-generado">Compártelo con tus estudiantes. Ahora carga sus preguntas:</p>
+          <button id="btn-descargar-plantilla-nuevo" class="boton-secundario boton-chico">Descargar plantilla CSV</button>
+          <label class="boton-secundario boton-chico boton-archivo">
+            Subir preguntas (CSV)
+            <input type="file" id="input-archivo-nuevo" accept=".csv" class="oculto">
+          </label>
+          <button id="btn-generar-ia-nuevo" class="boton-secundario boton-chico">✨ Crear preguntas con IA</button>
+          <p id="resultado-import-nuevo" class="mensaje-import oculto"></p>
+        </div>
+      </div>
+
+      <div class="tarjeta-panel">
+        <h2 class="subtitulo-panel">Mis juegos</h2>
+        <div class="tabla-scroll">
+          <table class="tabla-juegos" id="tabla-juegos">
+            <thead>
+              <tr>
+                <th>Juego</th>
+                <th>Código</th>
+                <th>Temática</th>
+                <th>Preguntas</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-juegos-cuerpo"></tbody>
+          </table>
+        </div>
+        <p id="sin-juegos" class="mensaje-vacio oculto">Todavía no has creado ningún juego.</p>
+      </div>
+    </div>
+
+    <!-- Modal editar juego existente -->
+    <div class="modal oculto" id="modal-editar-juego">
+      <div class="modal-caja modal-caja-ancha">
+        <h3>Editar juego</h3>
+        <p class="modal-texto">Código: <strong id="editar-juego-codigo"></strong> (no cambia)</p>
+        <form id="form-editar-juego" class="formulario-juego">
+          <div class="campo-formulario">
+            <label for="ej-nombre">Nombre del juego</label>
+            <input type="text" id="ej-nombre" maxlength="60" required>
+          </div>
+          <div class="campo-formulario">
+            <label for="ej-tematica">Temática</label>
+            <input type="text" id="ej-tematica" maxlength="60">
+          </div>
+          <div class="campo-formulario">
+            <label for="ej-profesor">Tu nombre (opcional)</label>
+            <input type="text" id="ej-profesor" maxlength="60">
+          </div>
+          <div class="campo-formulario">
+            <label for="ej-cantidad">Cantidad de preguntas (1 a 100)</label>
+            <input type="number" id="ej-cantidad" min="1" max="100" required>
+          </div>
+          <div class="campo-formulario">
+            <label>Modo de juego</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="ej-modo" value="individual"> Individual (cada estudiante juega a su ritmo)</label>
+              <label class="radio-linea"><input type="radio" name="ej-modo" value="vivo"> En vivo y sincronizado (todos responden la misma pregunta a la vez)</label>
+            </div>
+          </div>
+          <div class="campo-formulario" id="ej-grupo-modo-tiempo">
+            <label>¿Cómo funciona el tiempo?</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="ej-modo-tiempo" value="porPregunta"> Tiempo por pregunta</label>
+              <label class="radio-linea"><input type="radio" name="ej-modo-tiempo" value="total"> Tiempo total de la sesión</label>
+            </div>
+          </div>
+          <div class="campo-formulario oculto" id="ej-grupo-avance-vivo">
+            <label>¿Cómo avanza el juego entre preguntas?</label>
+            <div class="opciones-radio">
+              <label class="radio-linea"><input type="radio" name="ej-avance-vivo" value="automatico"> Automático por tiempo</label>
+              <label class="radio-linea"><input type="radio" name="ej-avance-vivo" value="manual"> El profesor avanza manualmente</label>
+            </div>
+          </div>
+          <div class="campo-formulario" id="ej-campo-segundos-pregunta">
+            <label for="ej-segundos-pregunta">Segundos por pregunta</label>
+            <input type="number" id="ej-segundos-pregunta" min="5" max="300">
+          </div>
+          <div class="campo-formulario" id="ej-campo-duracion-total">
+            <label for="ej-duracion-total">Duración total de la sesión (minutos)</label>
+            <input type="number" id="ej-duracion-total" min="1" max="120">
+          </div>
+          <div class="campo-formulario">
+            <label>Ayudas activas</label>
+            <div class="opciones-checkbox">
+              <label class="checkbox-linea"><input type="checkbox" id="ej-ayuda-cincuenta"> 50/50</label>
+              <label class="checkbox-linea"><input type="checkbox" id="ej-ayuda-llamada"> Llamada a un amigo</label>
+              <label class="checkbox-linea"><input type="checkbox" id="ej-ayuda-publico"> Pregunta al público</label>
+            </div>
+          </div>
+          <div class="fila-botones-modal">
+            <button type="submit" class="boton-dorado">Guardar cambios</button>
+            <button type="button" class="boton-secundario" id="cerrar-modal-editar-juego">Cancelar</button>
+          </div>
+          <p id="error-editar-juego" class="mensaje-error oculto"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal crear preguntas con IA -->
+    <div class="modal oculto" id="modal-generar-ia">
+      <div class="modal-caja">
+        <h3>✨ Crear preguntas con IA</h3>
+        <p class="modal-texto">Juego: <strong id="ia-nombre-juego"></strong></p>
+        <div class="campo-formulario">
+          <label for="ia-edad">Edad de los estudiantes</label>
+          <input type="number" id="ia-edad" min="5" max="25" value="15">
+        </div>
+        <p class="modal-texto-chico" id="ia-info-tematica"></p>
+        <button id="btn-generar-ia" class="boton-dorado">Generar preguntas</button>
+        <p id="ia-estado" class="mensaje-import oculto"></p>
+        <button class="boton-secundario boton-cerrar-modal" id="cerrar-modal-ia">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Modal cargar/actualizar preguntas de un juego existente -->
+    <div class="modal oculto" id="modal-cargar-preguntas">
+      <div class="modal-caja">
+        <h3>Cargar preguntas</h3>
+        <p class="modal-texto">Juego: <strong id="modal-cargar-nombre-juego"></strong></p>
+        <button id="btn-descargar-plantilla-modal" class="boton-secundario boton-chico">Descargar plantilla CSV</button>
+        <label class="boton-secundario boton-chico boton-archivo">
+          Subir preguntas (CSV)
+          <input type="file" id="input-archivo-modal" accept=".csv" class="oculto">
+        </label>
+        <button id="btn-generar-ia-modal" class="boton-secundario boton-chico">✨ Crear preguntas con IA</button>
+        <p id="resultado-import-modal" class="mensaje-import oculto"></p>
+        <button class="boton-dorado boton-cerrar-modal" id="cerrar-modal-cargar-preguntas">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Modal resultados -->
+    <div class="modal oculto" id="modal-resultados">
+      <div class="modal-caja modal-caja-ancha">
+        <h3>Resultados</h3>
+        <p class="modal-texto">Juego: <strong id="modal-resultados-nombre-juego"></strong></p>
+        <div class="tabla-scroll">
+          <table class="tabla-juegos" id="tabla-resultados">
+            <thead>
+              <tr><th>Estudiante</th><th>Puntaje</th><th>Resultado</th><th>Fecha</th></tr>
+            </thead>
+            <tbody id="tabla-resultados-cuerpo"></tbody>
+          </table>
+        </div>
+        <p id="sin-resultados" class="mensaje-vacio oculto">Todavía no hay estudiantes registrados en este juego.</p>
+        <button class="boton-dorado boton-cerrar-modal" id="cerrar-modal-resultados">Cerrar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: LOBBY ESTUDIANTE (modo en vivo) ============ -->
+  <section id="pantalla-estudiante-lobby-vivo" class="pantalla">
+    <div class="contenedor-inicio">
+      <h1 class="logo-juego logo-chico" id="lobby-estudiante-nombre-juego"></h1>
+      <div class="tarjeta-inicio tarjeta-lobby">
+        <div class="spinner-lobby" aria-hidden="true"></div>
+        <p class="texto-lobby">¡Ya estás dentro! Espera a que tu profesor inicie el juego.</p>
+        <p class="contador-lobby"><span id="lobby-estudiante-numero">1</span> jugador(es) conectado(s)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLAS: HOST (profesor proyecta esto) ============ -->
+  <section id="pantalla-host-lobby" class="pantalla">
+    <div class="contenedor-inicio">
+      <button class="boton-volver" data-volver="pantalla-docente-panel">&larr; Volver al panel</button>
+      <h1 class="logo-juego logo-chico" id="host-lobby-nombre-juego"></h1>
+      <p class="subtitulo-inicio">Comparte este código con tus estudiantes</p>
+
+      <div class="caja-codigo-generado">
+        <p class="codigo-generado" id="host-lobby-codigo"></p>
+      </div>
+
+      <div class="tarjeta-inicio tarjeta-lobby-host">
+        <p class="contador-lobby"><span id="host-lobby-numero">0</span> jugador(es) conectado(s)</p>
+        <div class="chips-jugadores" id="host-lobby-jugadores"></div>
+        <button id="btn-host-iniciar-juego" class="boton-dorado">Iniciar juego</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="pantalla-host-juego" class="pantalla">
+    <div class="contenedor-host">
+      <header class="cabecera-host">
+        <span id="host-nombre-juego"></span>
+        <span id="host-numero-pregunta"></span>
+        <span id="host-numero-jugadores"></span>
+      </header>
+
+      <!-- Vista: pregunta activa -->
+      <div id="host-vista-pregunta">
+        <div class="temporizador-contenedor temporizador-host">
+          <div class="temporizador-barra" id="host-temporizador-barra"></div>
+        </div>
+        <div class="caja-pregunta caja-pregunta-host">
+          <p class="texto-pregunta texto-pregunta-host" id="host-texto-pregunta"></p>
+        </div>
+        <div class="grid-opciones grid-opciones-host" id="host-grid-opciones">
+          <div class="opcion-host" data-letra="A"><span class="opcion-letra">A</span><span class="opcion-texto"></span></div>
+          <div class="opcion-host" data-letra="B"><span class="opcion-letra">B</span><span class="opcion-texto"></span></div>
+          <div class="opcion-host" data-letra="C"><span class="opcion-letra">C</span><span class="opcion-texto"></span></div>
+          <div class="opcion-host" data-letra="D"><span class="opcion-letra">D</span><span class="opcion-texto"></span></div>
+        </div>
+        <p class="contador-respuestas">Respuestas recibidas: <span id="host-respuestas-recibidas">0</span> / <span id="host-total-jugadores-pregunta">0</span></p>
+        <div class="fila-botones-modal fila-botones-host">
+          <button id="btn-host-revelar-ahora" class="boton-secundario">Revelar ahora</button>
+          <button id="btn-host-terminar" class="boton-secundario">Terminar juego</button>
+        </div>
+      </div>
+
+      <!-- Vista: revelando respuesta + ranking -->
+      <div id="host-vista-revelando" class="oculto">
+        <div class="caja-pregunta caja-pregunta-host">
+          <p class="texto-pregunta texto-pregunta-host" id="host-revelando-texto-pregunta"></p>
+        </div>
+        <div class="grid-opciones grid-opciones-host" id="host-revelando-opciones">
+          <div class="opcion-host" data-letra="A"><span class="opcion-letra">A</span><span class="opcion-texto"></span><span class="opcion-conteo"></span></div>
+          <div class="opcion-host" data-letra="B"><span class="opcion-letra">B</span><span class="opcion-texto"></span><span class="opcion-conteo"></span></div>
+          <div class="opcion-host" data-letra="C"><span class="opcion-letra">C</span><span class="opcion-texto"></span><span class="opcion-conteo"></span></div>
+          <div class="opcion-host" data-letra="D"><span class="opcion-letra">D</span><span class="opcion-texto"></span><span class="opcion-conteo"></span></div>
+        </div>
+        <h2 class="escalera-titulo titulo-ranking">🏆 Top 5</h2>
+        <ol class="lista-ranking" id="host-ranking"></ol>
+        <p class="mensaje-avance-automatico oculto" id="host-mensaje-avance-automatico"></p>
+        <div class="fila-botones-modal fila-botones-host">
+          <button id="btn-host-siguiente" class="boton-dorado oculto">Siguiente pregunta</button>
+          <button id="btn-host-terminar-2" class="boton-secundario">Terminar juego</button>
+        </div>
+      </div>
+
+      <!-- Vista: juego terminado -->
+      <div id="host-vista-final" class="oculto">
+        <h2 class="titulo-final">🏆 Resultados finales</h2>
+        <ol class="lista-ranking lista-ranking-final" id="host-ranking-final"></ol>
+        <button id="btn-host-volver-panel" class="boton-dorado">Volver al panel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA DE JUEGO ============ -->
+  <section id="pantalla-juego" class="pantalla">
+    <div class="layout-juego">
+
+      <!-- Escalera de premios -->
+      <aside class="escalera" id="escalera">
+        <h2 class="escalera-titulo">Progreso</h2>
+        <ol class="escalera-lista" id="escalera-lista"></ol>
+      </aside>
+
+      <!-- Zona principal de juego -->
+      <main class="zona-juego">
+        <header class="cabecera-juego">
+          <span class="jugador-nombre" id="jugador-nombre-juego"></span>
+          <div class="temporizador-contenedor">
+            <div class="temporizador-barra" id="temporizador-barra"></div>
+          </div>
+          <span class="numero-pregunta" id="numero-pregunta"></span>
+          <button class="boton-silencio" id="btn-silencio" title="Silenciar/activar sonido">🔊</button>
+        </header>
+        <p class="etiqueta-juego-actual" id="etiqueta-juego-actual"></p>
+
+        <div class="caja-pregunta">
+          <p class="texto-pregunta" id="texto-pregunta">Cargando pregunta...</p>
+        </div>
+
+        <div class="grid-opciones" id="grid-opciones">
+          <button class="boton-opcion" data-letra="A"><span class="opcion-letra">A</span><span class="opcion-texto"></span></button>
+          <button class="boton-opcion" data-letra="B"><span class="opcion-letra">B</span><span class="opcion-texto"></span></button>
+          <button class="boton-opcion" data-letra="C"><span class="opcion-letra">C</span><span class="opcion-texto"></span></button>
+          <button class="boton-opcion" data-letra="D"><span class="opcion-letra">D</span><span class="opcion-texto"></span></button>
+        </div>
+
+        <div class="barra-inferior">
+          <div class="ayudas" id="ayudas">
+            <button class="icono-ayuda" id="ayuda-cincuenta" title="50/50">
+              <span class="icono-forma">50:50</span>
+            </button>
+            <button class="icono-ayuda" id="ayuda-llamada" title="Llamada a un amigo">
+              <span class="icono-forma">📞</span>
+            </button>
+            <button class="icono-ayuda" id="ayuda-publico" title="Pregunta al público">
+              <span class="icono-forma">📊</span>
+            </button>
+          </div>
+          <button id="btn-retirarse" class="boton-retirarse">Terminar y ver mi puntaje</button>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal llamada a un amigo -->
+    <div class="modal oculto" id="modal-llamada">
+      <div class="modal-caja">
+        <h3>Llamando a tu amigo...</h3>
+        <div class="modal-cronometro" id="cronometro-llamada">30</div>
+        <p id="texto-llamada" class="modal-texto"></p>
+        <button class="boton-dorado boton-cerrar-modal" id="cerrar-modal-llamada">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Modal pregunta al público -->
+    <div class="modal oculto" id="modal-publico">
+      <div class="modal-caja">
+        <h3>Resultados de la encuesta</h3>
+        <div class="grafica-publico" id="grafica-publico"></div>
+        <button class="boton-dorado boton-cerrar-modal" id="cerrar-modal-publico">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Overlay: revelando respuesta en modo en vivo (sin botón de cerrar, avanza solo con el sondeo) -->
+    <div class="modal oculto" id="overlay-revelando-vivo">
+      <div class="modal-caja">
+        <h3 id="revelando-vivo-titulo">¡Correcto!</h3>
+        <p class="modal-texto" id="revelando-vivo-puntos"></p>
+        <p class="modal-texto-chico" id="revelando-vivo-posicion"></p>
+        <h2 class="escalera-titulo titulo-ranking">🏆 Top 5</h2>
+        <ol class="lista-ranking" id="revelando-vivo-ranking"></ol>
+        <p class="modal-texto-chico">Esperando a que el profesor continúe...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA FINAL ============ -->
+  <section id="pantalla-final" class="pantalla">
+    <div class="contenedor-final">
+      <h2 id="titulo-final" class="titulo-final"></h2>
+      <p class="premio-final-etiqueta">Puntaje obtenido</p>
+      <p class="premio-final-valor" id="premio-final-valor">0 / 0</p>
+      <p class="jugador-final" id="jugador-final"></p>
+      <p class="modal-texto-chico oculto" id="final-tu-posicion"></p>
+      <ol class="lista-ranking oculto" id="final-ranking"></ol>
+      <button id="btn-jugar-de-nuevo" class="boton-dorado">Jugar de nuevo</button>
+    </div>
+  </section>
+
+  <?!= include('sound'); ?>
+  <?!= include('script'); ?>
+</body>
+</html>
