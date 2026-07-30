@@ -1,12 +1,7 @@
-import { crearClienteServidor } from '@/lib/supabase/server';
 import { cerrarSesion } from '../auth-actions';
+import PanelDocente from './PanelDocente';
 
-export default async function PaginaPanelDocente() {
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export default function PaginaPanelDocente() {
   return (
     <main className="pantalla activa">
       <div className="contenedor-panel">
@@ -17,12 +12,7 @@ export default async function PaginaPanelDocente() {
           </form>
         </header>
 
-        <div className="tarjeta-panel">
-          <p>Sesión activa: <strong>{user?.email}</strong></p>
-          <p className="mensaje-vacio">
-            El panel para crear y administrar juegos se agrega en la siguiente fase de la migración.
-          </p>
-        </div>
+        <PanelDocente />
       </div>
     </main>
   );
