@@ -269,6 +269,22 @@ a { color: inherit; }
   gap: 14px;
 }
 .ayudas { display: flex; gap: 12px; }
+.barra-racha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: -4px;
+}
+.racha-indicador {
+  background: rgba(245,197,66,.14);
+  border: 1px solid rgba(245,197,66,.4);
+  color: var(--dorado-claro);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: .85rem;
+  font-weight: 800;
+}
 .icono-ayuda {
   width: 54px;
   height: 54px;

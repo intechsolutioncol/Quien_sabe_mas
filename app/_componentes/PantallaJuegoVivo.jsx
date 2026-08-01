@@ -8,6 +8,7 @@ import { mapearSesionVivoPublica } from '@/lib/juego/vivo-datos';
 import Escalera from './Escalera';
 import ModalLlamada from './ModalLlamada';
 import ModalPublico from './ModalPublico';
+import ModalElegirObjetivo from './ModalElegirObjetivo';
 
 const AYUDAS_POR_DEFECTO = { cincuenta: true, llamada: true, publico: true };
 
@@ -30,6 +31,9 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
   const [modalPublico, setModalPublico] = useState(null);
   const [silenciado, setSilenciado] = useState(false);
   const [, forzarRenderizado] = useState(0);
+  const [poder, setPoder] = useState({ rachaActual: 0, poderDisponible: false, escudoActivo: false });
+  const [eligiendoObjetivo, setEligiendoObjetivo] = useState(false);
+  const [mensajePoder, setMensajePoder] = useState('');
 
   const indiceMostradoRef = useRef(-1);
   const faseRevelandoMostradaRef = useRef(false);
@@ -49,6 +53,16 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
     );
   }
 
+  async function actualizarMiPoder() {
+    try {
+      const miEstado = await llamarApi(`/api/vivo/mi-estado?codigo=${datos.codigoJuego}&sessionId=${datos.sessionId}`);
+      setPoder({ rachaActual: miEstado.rachaActual, poderDisponible: miEstado.poderDisponible, escudoActivo: miEstado.escudoActivo });
+      return miEstado;
+    } catch {
+      return null;
+    }
+  }
+
   async function procesarEstado(nuevo) {
     setEstado(nuevo);
 
@@ -61,6 +75,7 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
         setOverlay(null);
         resaltarEscalonActual(nuevo.pregunta.numero);
         Sonido.iniciarSuspenso();
+        actualizarMiPoder();
       }
       return;
     }
@@ -72,6 +87,7 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
 
       try {
         const miEstado = await llamarApi(`/api/vivo/mi-estado?codigo=${datos.codigoJuego}&sessionId=${datos.sessionId}`);
+        setPoder({ rachaActual: miEstado.rachaActual, poderDisponible: miEstado.poderDisponible, escudoActivo: miEstado.escudoActivo });
         marcarEscalon(indiceMostradoRef.current + 1, miEstado.esCorrecta);
         if (miEstado.esCorrecta) Sonido.correcto();
         else Sonido.incorrecto();
@@ -134,9 +150,48 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
     return () => clearInterval(id);
   }, []);
 
+  // El aviso de "usaste tu poder" se borra solo después de unos segundos.
+  useEffect(() => {
+    if (!mensajePoder) return;
+    const id = setTimeout(() => setMensajePoder(''), 5000);
+    return () => clearTimeout(id);
+  }, [mensajePoder]);
+
   function alternarSilencio() {
     Sonido.activar();
     setSilenciado(Sonido.alternarSilencio());
+  }
+
+  async function usarEscudo() {
+    if (!poder.poderDisponible) return;
+    try {
+      await llamarApi('/api/vivo/poder-racha', {
+        method: 'POST',
+        body: JSON.stringify({ codigo: datos.codigoJuego, sessionId: datos.sessionId, accion: 'escudo' }),
+      });
+      setPoder((prev) => ({ ...prev, poderDisponible: false, escudoActivo: true }));
+      setMensajePoder('🛡️ Activaste tu escudo: bloqueará el próximo intento de quitarte puntos.');
+    } catch (err) {
+      alert(`No se pudo usar el poder: ${err.message}`);
+    }
+  }
+
+  async function robarPuntos(nombreObjetivo) {
+    setEligiendoObjetivo(false);
+    try {
+      const resultado = await llamarApi('/api/vivo/poder-racha', {
+        method: 'POST',
+        body: JSON.stringify({ codigo: datos.codigoJuego, sessionId: datos.sessionId, accion: 'robar', nombreObjetivo }),
+      });
+      setPoder((prev) => ({ ...prev, poderDisponible: false }));
+      setMensajePoder(
+        resultado.bloqueado
+          ? `🛡️ ¡${resultado.objetivo} tenía un escudo activo! No le pudiste quitar puntos.`
+          : `🎯 Le quitaste ${resultado.puntosQuitados} puntos a ${resultado.objetivo}.`
+      );
+    } catch (err) {
+      alert(`No se pudo usar el poder: ${err.message}`);
+    }
   }
 
   async function seleccionarOpcion(letra) {
@@ -290,6 +345,24 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
               )}
             </div>
           </div>
+
+          {(poder.rachaActual > 0 || poder.escudoActivo || mensajePoder) && (
+            <div className="barra-racha">
+              {poder.rachaActual > 0 && <span className="racha-indicador">🔥 Racha: {poder.rachaActual}</span>}
+              {poder.escudoActivo && <span className="racha-indicador">🛡️ Escudo activo</span>}
+              {poder.poderDisponible && (
+                <>
+                  <button className="boton-secundario boton-chico" disabled={respondiendo} onClick={usarEscudo}>
+                    🛡️ Usar escudo
+                  </button>
+                  <button className="boton-secundario boton-chico" disabled={respondiendo} onClick={() => setEligiendoObjetivo(true)}>
+                    🎯 Quitar puntos
+                  </button>
+                </>
+              )}
+              {mensajePoder && <p className="mensaje-import exito">{mensajePoder}</p>}
+            </div>
+          )}
         </main>
       </div>
 
@@ -297,6 +370,14 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
         <ModalLlamada segundos={modalLlamada.segundos} texto={modalLlamada.texto} onCerrar={() => setModalLlamada(null)} />
       )}
       {modalPublico && <ModalPublico porcentajes={modalPublico} onCerrar={() => setModalPublico(null)} />}
+      {eligiendoObjetivo && (
+        <ModalElegirObjetivo
+          codigo={datos.codigoJuego}
+          propioNombre={datos.nombreJugador}
+          onElegir={robarPuntos}
+          onCerrar={() => setEligiendoObjetivo(false)}
+        />
+      )}
 
       {overlay && (
         <div className="modal">

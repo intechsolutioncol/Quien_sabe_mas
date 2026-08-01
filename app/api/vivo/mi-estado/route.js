@@ -52,5 +52,8 @@ export async function GET(request) {
     esCorrecta: respuestaActual?.esCorrecta ?? false,
     puntosGanados: respuestaActual?.puntosGanados ?? 0,
     tuPosicion,
+    rachaActual: jugador.racha_actual,
+    poderDisponible: jugador.poder_disponible,
+    escudoActivo: jugador.escudo_activo,
   });
 }
