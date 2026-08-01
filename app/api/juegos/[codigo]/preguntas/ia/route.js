@@ -3,6 +3,7 @@ import { requerirProfesor } from '@/lib/auth/requerir-profesor';
 import { crearClienteAdmin } from '@/lib/supabase/admin';
 import { distribuirPorNiveles } from '@/lib/juego/distribucion';
 import { generarPreguntasGemini, validarPreguntaGenerada } from '@/lib/juego/gemini';
+import { rebalancearDistribucionRespuestas } from '@/lib/juego/rebalanceo';
 
 // Genera (y reemplaza) el banco de preguntas de un juego con IA
 // (equivalente a generarPreguntasConIA de Code.js).
@@ -70,10 +71,14 @@ export async function POST(request, { params }) {
     );
   }
 
+  // La IA a veces concentra la respuesta correcta en una sola letra
+  // (ej. "A" en todas). Se reparte de forma pareja antes de guardar.
+  const preguntasBalanceadas = rebalancearDistribucionRespuestas(preguntasValidas);
+
   const { error: errorBorrar } = await admin.from('preguntas').delete().eq('juego_id', juego.id);
   if (errorBorrar) return NextResponse.json({ error: errorBorrar.message }, { status: 500 });
 
-  const { error: errorInsertar } = await admin.from('preguntas').insert(preguntasValidas);
+  const { error: errorInsertar } = await admin.from('preguntas').insert(preguntasBalanceadas);
   if (errorInsertar) return NextResponse.json({ error: errorInsertar.message }, { status: 500 });
 
   return NextResponse.json({
