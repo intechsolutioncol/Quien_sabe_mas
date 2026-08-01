@@ -21,6 +21,7 @@ export default function HostVivo({ codigo }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [accionando, setAccionando] = useState(false);
+  const [jugadoresHost, setJugadoresHost] = useState([]);
 
   function actualizarEstado(nuevo) {
     setEstado(nuevo);
@@ -85,6 +86,36 @@ export default function HostVivo({ codigo }) {
     };
   }, [codigo]);
 
+  // Lista de jugadores con su sessionId, solo mientras estamos en el
+  // lobby (es lo que necesita el botón de expulsar). Se refresca cuando
+  // cambia la cantidad de conectados (alguien entró o fue expulsado).
+  useEffect(() => {
+    if (!estado || estado.estadoJuego !== 'lobby') return;
+    let cancelado = false;
+    llamarApi(`/api/vivo/jugadores-host?codigo=${codigo}`)
+      .then((lista) => {
+        if (!cancelado) setJugadoresHost(lista);
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [codigo, estado?.estadoJuego, estado?.numeroJugadores]);
+
+  async function expulsarJugador(jugador) {
+    if (!confirm(`¿Expulsar a "${jugador.nombre}" de la sala?`)) return;
+    try {
+      const nuevo = await llamarApi('/api/vivo/expulsar', {
+        method: 'POST',
+        body: JSON.stringify({ codigo, sessionIdJugador: jugador.sessionId }),
+      });
+      actualizarEstado(nuevo);
+      setJugadoresHost((prev) => prev.filter((j) => j.sessionId !== jugador.sessionId));
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
   async function accionHost(ruta) {
     if (accionando) return;
     setAccionando(true);
@@ -143,9 +174,17 @@ export default function HostVivo({ codigo }) {
           <div className="tarjeta-inicio tarjeta-lobby-host">
             <p className="contador-lobby">{estado.numeroJugadores} jugador(es) conectado(s)</p>
             <div className="chips-jugadores">
-              {estado.nombresJugadores.map((nombre, i) => (
-                <span className="chip-jugador" key={i}>
-                  {nombre}
+              {jugadoresHost.map((jugador) => (
+                <span className="chip-jugador" key={jugador.sessionId}>
+                  {jugador.nombre}
+                  <button
+                    type="button"
+                    className="chip-jugador-expulsar"
+                    title={`Expulsar a ${jugador.nombre}`}
+                    onClick={() => expulsarJugador(jugador)}
+                  >
+                    🗑️
+                  </button>
                 </span>
               ))}
             </div>
