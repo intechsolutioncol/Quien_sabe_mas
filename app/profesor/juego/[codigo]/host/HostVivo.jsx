@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { llamarApi } from '@/lib/api-cliente';
 import { crearClienteNavegador } from '@/lib/supabase/client';
 import { mapearSesionVivoPublica } from '@/lib/juego/vivo-datos';
+import EquiposLobby from './EquiposLobby';
 
 const INTERVALO_TICK_MS = 1000;
 
@@ -116,6 +117,31 @@ export default function HostVivo({ codigo }) {
     }
   }
 
+  async function asignarEquipo(sessionIdJugador, equipo) {
+    try {
+      await llamarApi('/api/vivo/equipos/asignar', {
+        method: 'POST',
+        body: JSON.stringify({ codigo, sessionIdJugador, equipo }),
+      });
+      setJugadoresHost((prev) => prev.map((j) => (j.sessionId === sessionIdJugador ? { ...j, equipo } : j)));
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
+  async function formarEquiposAleatorio() {
+    try {
+      await llamarApi('/api/vivo/equipos/aleatorio', {
+        method: 'POST',
+        body: JSON.stringify({ codigo, cantidadEquipos: estado.cantidadEquipos }),
+      });
+      const lista = await llamarApi(`/api/vivo/jugadores-host?codigo=${codigo}`);
+      setJugadoresHost(lista);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
   async function accionHost(ruta) {
     if (accionando) return;
     setAccionando(true);
@@ -173,22 +199,35 @@ export default function HostVivo({ codigo }) {
 
           <div className="tarjeta-inicio tarjeta-lobby-host">
             <p className="contador-lobby">{estado.numeroJugadores} jugador(es) conectado(s)</p>
-            <div className="chips-jugadores">
-              {jugadoresHost.map((jugador) => (
-                <span className="chip-jugador" key={jugador.sessionId}>
-                  {jugador.nombre}
-                  <button
-                    type="button"
-                    className="chip-jugador-expulsar"
-                    title={`Expulsar a ${jugador.nombre}`}
-                    onClick={() => expulsarJugador(jugador)}
-                  >
-                    🗑️
-                  </button>
-                </span>
-              ))}
-            </div>
-            <button className="boton-dorado" disabled={accionando} onClick={() => accionHost('/api/vivo/avanzar')}>
+
+            {estado.agrupacion === 'equipos' ? (
+              <EquiposLobby
+                codigo={codigo}
+                cantidadEquipos={estado.cantidadEquipos || 2}
+                jugadores={jugadoresHost}
+                onAsignar={asignarEquipo}
+                onFormarAleatorio={formarEquiposAleatorio}
+                onExpulsar={expulsarJugador}
+              />
+            ) : (
+              <div className="chips-jugadores">
+                {jugadoresHost.map((jugador) => (
+                  <span className="chip-jugador" key={jugador.sessionId}>
+                    {jugador.nombre}
+                    <button
+                      type="button"
+                      className="chip-jugador-expulsar"
+                      title={`Expulsar a ${jugador.nombre}`}
+                      onClick={() => expulsarJugador(jugador)}
+                    >
+                      🗑️
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <button className="boton-dorado" disabled={accionando} onClick={() => accionHost('/api/vivo/avanzar')} style={{ marginTop: 16 }}>
               Iniciar juego
             </button>
           </div>
@@ -268,11 +307,27 @@ export default function HostVivo({ codigo }) {
                 </div>
               ))}
             </div>
+            {estado.agrupacion === 'equipos' && estado.rankingEquipos && (
+              <>
+                <h2 className="escalera-titulo titulo-ranking">🏆 Ranking por equipo</h2>
+                <ol className="lista-ranking">
+                  {estado.rankingEquipos.map((r, i) => (
+                    <li key={i}>
+                      <span className="puesto-ranking">Equipo {r.equipo}</span>
+                      <span>{r.puntaje} pts</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
             <h2 className="escalera-titulo titulo-ranking">🏆 Top 5</h2>
             <ol className="lista-ranking">
               {estado.ranking.map((r, i) => (
                 <li key={i}>
-                  <span className="puesto-ranking">{r.nombre}</span>
+                  <span className="puesto-ranking">
+                    {r.nombre}
+                    {r.racha >= 3 ? ' 🔥' : ''}
+                  </span>
                   <span>{r.puntaje} pts</span>
                 </li>
               ))}
@@ -297,6 +352,19 @@ export default function HostVivo({ codigo }) {
         {estado.estadoJuego === 'finalizado' && (
           <>
             <h2 className="titulo-final">🏆 Resultados finales</h2>
+            {estado.agrupacion === 'equipos' && estado.rankingEquipos && (
+              <>
+                <h3 className="escalera-titulo titulo-ranking">Por equipo</h3>
+                <ol className="lista-ranking">
+                  {estado.rankingEquipos.map((r, i) => (
+                    <li key={i}>
+                      <span className="puesto-ranking">Equipo {r.equipo}</span>
+                      <span>{r.puntaje} pts</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
             <ol className="lista-ranking lista-ranking-final">
               {estado.ranking.map((r, i) => (
                 <li key={i}>

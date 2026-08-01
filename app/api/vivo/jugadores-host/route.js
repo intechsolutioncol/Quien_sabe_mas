@@ -24,10 +24,10 @@ export async function GET(request) {
 
   const { data, error } = await admin
     .from('sesiones_vivo_jugadores')
-    .select('session_id, nombre')
+    .select('session_id, nombre, equipo')
     .eq('codigo', codigoNormalizado)
     .order('nombre');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(data.map((j) => ({ sessionId: j.session_id, nombre: j.nombre })));
+  return NextResponse.json(data.map((j) => ({ sessionId: j.session_id, nombre: j.nombre, equipo: j.equipo })));
 }

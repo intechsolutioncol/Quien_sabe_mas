@@ -65,6 +65,8 @@ export async function POST(request) {
       avance_vivo: datos.avanceVivo,
       segundos_por_pregunta: datos.segundosPorPregunta,
       duracion_total_segundos: datos.duracionTotalSegundos,
+      agrupacion_vivo: datos.agrupacionVivo,
+      cantidad_equipos: datos.cantidadEquipos,
     })
     .select()
     .single();

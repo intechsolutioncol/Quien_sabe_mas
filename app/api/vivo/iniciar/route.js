@@ -54,6 +54,9 @@ export async function POST(request) {
     respuesta_correcta_revelada: null,
     distribucion_respuestas: null,
     ranking: [],
+    agrupacion: juego.agrupacion_vivo,
+    cantidad_equipos: juego.agrupacion_vivo === 'equipos' ? juego.cantidad_equipos : null,
+    ranking_equipos: null,
     fin_pregunta_programado: null,
     fin_revelando_programado: null,
   });

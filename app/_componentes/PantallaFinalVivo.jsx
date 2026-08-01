@@ -17,8 +17,24 @@ export default function PantallaFinalVivo({ resultado, nombreJugador, onJugarDeN
         <h2 className="titulo-final">🏆 Juego en vivo terminado</h2>
         <p className="premio-final-etiqueta">Puntaje obtenido</p>
         <p className="premio-final-valor">{resultado.puntaje} puntos</p>
-        <p className="jugador-final">{nombreJugador}</p>
+        <p className="jugador-final">
+          {nombreJugador}
+          {resultado.equipo ? ` · Equipo ${resultado.equipo}` : ''}
+        </p>
         {resultado.tuPosicion && <p className="modal-texto-chico">Terminaste en el puesto #{resultado.tuPosicion}</p>}
+        {resultado.rankingEquipos && (
+          <>
+            <h2 className="escalera-titulo titulo-ranking">Por equipo</h2>
+            <ol className="lista-ranking">
+              {resultado.rankingEquipos.map((r, i) => (
+                <li key={i}>
+                  <span className="puesto-ranking">Equipo {r.equipo}</span>
+                  <span>{r.puntaje} pts</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
         <ol className="lista-ranking">
           {resultado.ranking.map((r, i) => (
             <li key={i}>

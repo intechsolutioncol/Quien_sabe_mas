@@ -567,6 +567,47 @@ a { color: inherit; }
 }
 .chip-jugador-expulsar:hover { opacity: 1; }
 
+/* ===================== MODO EN VIVO: EQUIPOS (arrastrar y soltar) ===================== */
+.equipos-lobby { text-align: center; }
+.columnas-equipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  justify-content: center;
+}
+.columna-equipo {
+  background: rgba(4, 16, 50, .5);
+  border: 1px dashed rgba(245,197,66,.4);
+  border-radius: 14px;
+  padding: 12px;
+  min-width: 160px;
+  min-height: 140px;
+  flex: 1 1 160px;
+  transition: background .15s ease, border-color .15s ease;
+}
+.columna-equipo-sobre {
+  background: rgba(245,197,66,.14);
+  border-color: var(--dorado);
+}
+.columna-equipo-titulo {
+  font-family: 'Cinzel', serif;
+  color: var(--dorado-claro);
+  font-size: .95rem;
+  margin: 0 0 10px;
+}
+.columna-equipo-jugadores { display: flex; flex-direction: column; gap: 8px; }
+.columna-equipo-vacia { color: var(--texto-muted); font-size: .8rem; margin: 0; }
+.chip-arrastrable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  touch-action: none;
+}
+.chip-jugador-agarre { cursor: grab; flex: 1; text-align: left; }
+.chip-arrastrando { opacity: .6; box-shadow: 0 0 0 2px var(--dorado); }
+
 /* ===================== MODO EN VIVO: PANTALLA HOST ===================== */
 .contenedor-host { max-width: 1000px; width: 100%; margin: 0 auto; padding: 10px 0 40px; }
 .cabecera-host {

@@ -12,6 +12,8 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
     modo: juego.modo || 'individual',
     modoTiempo: juego.modoTiempo || 'porPregunta',
     avanceVivo: juego.avanceVivo || 'automatico',
+    agrupacionVivo: juego.agrupacionVivo || 'individual',
+    cantidadEquipos: juego.cantidadEquipos || 2,
     segundosPorPregunta: juego.segundosPorPregunta || 45,
     duracionTotalMinutos: Math.round((juego.duracionTotalSegundos || 600) / 60),
     ayudaCincuenta: !!(juego.ayudas && juego.ayudas.cincuenta),
@@ -40,6 +42,8 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
           modo: valores.modo,
           modoTiempo: valores.modoTiempo,
           avanceVivo: valores.avanceVivo,
+          agrupacionVivo: valores.agrupacionVivo,
+          cantidadEquipos: valores.cantidadEquipos,
           segundosPorPregunta: valores.segundosPorPregunta,
           duracionTotalMinutos: valores.duracionTotalMinutos,
           ayudas: {
@@ -167,6 +171,44 @@ export default function ModalEditarJuego({ juego, onCerrar, onGuardado }) {
                   El profesor avanza manualmente
                 </label>
               </div>
+            </div>
+          )}
+
+          {valores.modo === 'vivo' && (
+            <div className="campo-formulario">
+              <label>¿Cómo juegan los estudiantes?</label>
+              <div className="opciones-radio">
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.agrupacionVivo === 'individual'}
+                    onChange={() => actualizar('agrupacionVivo', 'individual')}
+                  />
+                  Cada quien por su cuenta
+                </label>
+                <label className="radio-linea">
+                  <input
+                    type="radio"
+                    checked={valores.agrupacionVivo === 'equipos'}
+                    onChange={() => actualizar('agrupacionVivo', 'equipos')}
+                  />
+                  En equipos
+                </label>
+              </div>
+            </div>
+          )}
+
+          {valores.modo === 'vivo' && valores.agrupacionVivo === 'equipos' && (
+            <div className="campo-formulario">
+              <label htmlFor="ej-cantidad-equipos">Cantidad de equipos</label>
+              <input
+                id="ej-cantidad-equipos"
+                type="number"
+                min={2}
+                max={20}
+                value={valores.cantidadEquipos}
+                onChange={(e) => actualizar('cantidadEquipos', e.target.value)}
+              />
             </div>
           )}
 

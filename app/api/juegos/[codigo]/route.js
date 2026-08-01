@@ -44,6 +44,8 @@ export async function PUT(request, { params }) {
       avance_vivo: datos.avanceVivo,
       segundos_por_pregunta: datos.segundosPorPregunta,
       duracion_total_segundos: datos.duracionTotalSegundos,
+      agrupacion_vivo: datos.agrupacionVivo,
+      cantidad_equipos: datos.cantidadEquipos,
     })
     .eq('codigo', codigoNormalizado)
     .select()

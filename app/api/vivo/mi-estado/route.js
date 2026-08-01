@@ -55,5 +55,6 @@ export async function GET(request) {
     rachaActual: jugador.racha_actual,
     poderDisponible: jugador.poder_disponible,
     escudoActivo: jugador.escudo_activo,
+    equipo: jugador.equipo,
   });
 }

@@ -32,6 +32,7 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
   const [silenciado, setSilenciado] = useState(false);
   const [, forzarRenderizado] = useState(0);
   const [poder, setPoder] = useState({ rachaActual: 0, poderDisponible: false, escudoActivo: false });
+  const [miEquipo, setMiEquipo] = useState(null);
   const [eligiendoObjetivo, setEligiendoObjetivo] = useState(false);
   const [mensajePoder, setMensajePoder] = useState('');
 
@@ -57,6 +58,7 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
     try {
       const miEstado = await llamarApi(`/api/vivo/mi-estado?codigo=${datos.codigoJuego}&sessionId=${datos.sessionId}`);
       setPoder({ rachaActual: miEstado.rachaActual, poderDisponible: miEstado.poderDisponible, escudoActivo: miEstado.escudoActivo });
+      setMiEquipo(miEstado.equipo);
       return miEstado;
     } catch {
       return null;
@@ -99,6 +101,7 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
             : `Puntaje total: ${miEstado.puntajeTotal}`,
           posicionTexto: miEstado.tuPosicion ? `Vas de puesto #${miEstado.tuPosicion}` : '',
           ranking: nuevo.ranking,
+          rankingEquipos: nuevo.rankingEquipos,
         });
       } catch {
         // se reintenta si vuelve a llegar el mismo estado
@@ -110,9 +113,15 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
     if (nuevo.estadoJuego === 'finalizado') {
       try {
         const miEstado = await llamarApi(`/api/vivo/mi-estado?codigo=${datos.codigoJuego}&sessionId=${datos.sessionId}`);
-        onFinal({ ranking: nuevo.ranking, tuPosicion: miEstado.tuPosicion, puntaje: miEstado.puntajeTotal });
+        onFinal({
+          ranking: nuevo.ranking,
+          rankingEquipos: nuevo.rankingEquipos,
+          tuPosicion: miEstado.tuPosicion,
+          puntaje: miEstado.puntajeTotal,
+          equipo: miEstado.equipo,
+        });
       } catch {
-        onFinal({ ranking: nuevo.ranking, tuPosicion: null, puntaje: 0 });
+        onFinal({ ranking: nuevo.ranking, rankingEquipos: nuevo.rankingEquipos, tuPosicion: null, puntaje: 0, equipo: null });
       }
     }
   }
@@ -281,7 +290,10 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
         <Escalera escalones={escalones} />
         <main className="zona-juego">
           <header className="cabecera-juego">
-            <span className="jugador-nombre">{datos.nombreJugador}</span>
+            <span className="jugador-nombre">
+              {datos.nombreJugador}
+              {miEquipo ? ` · Equipo ${miEquipo}` : ''}
+            </span>
             <div className="temporizador-contenedor">
               <div
                 className={`temporizador-barra ${enAlerta ? 'alerta' : ''}`}
@@ -385,6 +397,19 @@ export default function PantallaJuegoVivo({ datos, estadoInicial, onFinal }) {
             <h3>{overlay.titulo}</h3>
             <p className="modal-texto">{overlay.puntosTexto}</p>
             <p className="modal-texto-chico">{overlay.posicionTexto}</p>
+            {overlay.rankingEquipos && (
+              <>
+                <h2 className="escalera-titulo titulo-ranking">🏆 Por equipo</h2>
+                <ol className="lista-ranking">
+                  {overlay.rankingEquipos.map((r, i) => (
+                    <li key={i}>
+                      <span className="puesto-ranking">Equipo {r.equipo}</span>
+                      <span>{r.puntaje} pts</span>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
             <h2 className="escalera-titulo titulo-ranking">🏆 Top 5</h2>
             <ol className="lista-ranking">
               {overlay.ranking.map((r, i) => (

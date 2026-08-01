@@ -12,6 +12,8 @@ const VALORES_INICIALES = {
   modo: 'individual',
   modoTiempo: 'porPregunta',
   avanceVivo: 'automatico',
+  agrupacionVivo: 'individual',
+  cantidadEquipos: 2,
   segundosPorPregunta: 45,
   duracionTotalMinutos: 10,
   ayudaCincuenta: true,
@@ -47,6 +49,8 @@ export default function FormularioCrearJuego({ onJuegoCreado }) {
           modo: valores.modo,
           modoTiempo: valores.modoTiempo,
           avanceVivo: valores.avanceVivo,
+          agrupacionVivo: valores.agrupacionVivo,
+          cantidadEquipos: valores.cantidadEquipos,
           segundosPorPregunta: valores.segundosPorPregunta,
           duracionTotalMinutos: valores.duracionTotalMinutos,
           ayudas: {
@@ -235,6 +239,44 @@ export default function FormularioCrearJuego({ onJuegoCreado }) {
                 El profesor avanza manualmente (para comentar cada pregunta)
               </label>
             </div>
+          </div>
+        )}
+
+        {valores.modo === 'vivo' && (
+          <div className="campo-formulario">
+            <label>¿Cómo juegan los estudiantes?</label>
+            <div className="opciones-radio">
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.agrupacionVivo === 'individual'}
+                  onChange={() => actualizar('agrupacionVivo', 'individual')}
+                />
+                Cada quien por su cuenta
+              </label>
+              <label className="radio-linea">
+                <input
+                  type="radio"
+                  checked={valores.agrupacionVivo === 'equipos'}
+                  onChange={() => actualizar('agrupacionVivo', 'equipos')}
+                />
+                En equipos (armas los equipos antes de iniciar)
+              </label>
+            </div>
+          </div>
+        )}
+
+        {valores.modo === 'vivo' && valores.agrupacionVivo === 'equipos' && (
+          <div className="campo-formulario">
+            <label htmlFor="cj-cantidad-equipos">Cantidad de equipos</label>
+            <input
+              id="cj-cantidad-equipos"
+              type="number"
+              min={2}
+              max={20}
+              value={valores.cantidadEquipos}
+              onChange={(e) => actualizar('cantidadEquipos', e.target.value)}
+            />
           </div>
         )}
 
