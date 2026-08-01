@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { llamarApi } from '@/lib/api-cliente';
 import { descargarPlantillaCsv, leerArchivoComoTexto } from '@/lib/csv-plantilla';
 
@@ -107,6 +108,10 @@ export default function ModalCargarPreguntas({ juego, onCerrar, onCambio }) {
         </button>
 
         {mensaje && <p className={`mensaje-import ${mensaje.error ? 'error' : 'exito'}`}>{mensaje.texto}</p>}
+
+        <p style={{ marginTop: 16 }}>
+          <Link href={`/profesor/panel/preguntas/${juego.codigo}`}>Editar preguntas individualmente →</Link>
+        </p>
 
         <button className="boton-dorado boton-cerrar-modal" onClick={onCerrar} style={{ marginTop: 16 }}>
           Cerrar
