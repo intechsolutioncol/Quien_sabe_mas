@@ -30,3 +30,27 @@ export async function GET(_request, { params }) {
 
   return NextResponse.json(resultados.map(mapearResultado));
 }
+
+// Borra todos los resultados de un juego (se usa después de descargar el
+// PDF, para que la tabla no acumule resultados de rondas ya cerradas).
+export async function DELETE(_request, { params }) {
+  const user = await requerirProfesor();
+  if (!user) return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });
+
+  const { codigo } = await params;
+  const codigoNormalizado = (codigo || '').toString().trim().toUpperCase();
+
+  const admin = crearClienteAdmin();
+  const { data: juego } = await admin
+    .from('juegos')
+    .select('id')
+    .eq('codigo', codigoNormalizado)
+    .eq('profesor_id', user.id)
+    .maybeSingle();
+  if (!juego) return NextResponse.json({ error: 'No se encontró el juego indicado.' }, { status: 404 });
+
+  const { error } = await admin.from('resultados').delete().eq('juego_id', juego.id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ ok: true });
+}

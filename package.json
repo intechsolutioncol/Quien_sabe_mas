@@ -11,6 +11,8 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "next": "15.5.22",
     "pg": "^8.22.0",
     "react": "19.1.0",
