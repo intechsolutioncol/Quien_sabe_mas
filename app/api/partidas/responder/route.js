@@ -29,22 +29,17 @@ export async function POST(request) {
   const hayMasPreguntas = siguienteIndice < estado.preguntas.length;
   const cambios = { correctas };
 
-  if (estado.modo_tiempo === 'porPregunta' && !esCorrecta) {
-    // Modo clásico: una respuesta incorrecta termina la partida.
-    cambios.terminado = true;
-    resultado.juegoTerminado = true;
-    resultado.motivo = 'fallo';
-    resultado.puntajeFinal = correctas;
-    resultado.totalPreguntas = estado.preguntas.length;
-    await guardarResultado(admin, estado.juego_id, estado.nombre_jugador, correctas, estado.preguntas.length, 'perdió');
-  } else if (!hayMasPreguntas) {
-    // Se acabaron las preguntas del banco de esta partida.
+  if (!hayMasPreguntas) {
+    // Se acabaron las preguntas del banco de esta partida: es una prueba,
+    // no "Millonario" — fallar una no la corta, solo se llega hasta acá
+    // habiendo respondido todas (bien o mal) y se muestra el desglose.
     cambios.terminado = true;
     cambios.pregunta_actual = siguienteIndice;
     resultado.juegoTerminado = true;
     resultado.motivo = correctas === estado.preguntas.length ? 'perfecto' : 'completado';
     resultado.puntajeFinal = correctas;
     resultado.totalPreguntas = estado.preguntas.length;
+    resultado.preguntasRespondidas = siguienteIndice;
     await guardarResultado(admin, estado.juego_id, estado.nombre_jugador, correctas, estado.preguntas.length, 'completado');
   } else {
     cambios.pregunta_actual = siguienteIndice;

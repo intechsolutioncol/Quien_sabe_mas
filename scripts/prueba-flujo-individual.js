@@ -2,6 +2,10 @@
 // juego + preguntas de prueba directo en la base de datos, luego ejercita
 // el flujo completo de un estudiante contra el servidor local corriendo
 // en http://localhost:3000, y al final borra todo lo que creó.
+//
+// El modo individual ahora funciona como una PRUEBA (no "Millonario"):
+// una respuesta incorrecta ya no cierra el juego, solo se marca y sigue
+// con la siguiente. Este script verifica justamente eso.
 const { createClient } = require('@supabase/supabase-js');
 
 const BASE = 'http://localhost:3000';
@@ -41,7 +45,7 @@ function assert(cond, mensaje) {
         codigo,
         profesor_id: profesorId,
         nombre_juego: 'Juego de prueba automática',
-        cantidad_preguntas: 2,
+        cantidad_preguntas: 3,
         modo: 'individual',
         ayudas: { cincuenta: true, llamada: true, publico: true },
         modo_tiempo: 'porPregunta',
@@ -71,7 +75,7 @@ function assert(cond, mensaje) {
       body: JSON.stringify({ codigo, nombreEstudiante: 'Estudiante Prueba' }),
     });
     assert(unirse.status === 200, `unirse responde 200 (fue ${unirse.status}: ${JSON.stringify(unirse.cuerpo)})`);
-    assert(unirse.cuerpo.totalPreguntas === 2, 'la partida seleccionó 2 preguntas según cantidadPreguntas');
+    assert(unirse.cuerpo.totalPreguntas === 3, 'la partida seleccionó 3 preguntas según cantidadPreguntas');
     const sessionId = unirse.cuerpo.sessionId;
 
     // 2. Ayuda 50/50
@@ -96,31 +100,48 @@ function assert(cond, mensaje) {
     });
     assert(respuesta1.status === 200, `responder responde 200 (fue ${respuesta1.status})`);
     assert(respuesta1.cuerpo.esCorrecta === true, 'la primera respuesta se marca correcta');
-    assert(respuesta1.cuerpo.juegoTerminado === false, 'el juego sigue tras acertar (quedaba 1 pregunta más)');
+    assert(respuesta1.cuerpo.juegoTerminado === false, 'el juego sigue tras acertar (quedaban más preguntas)');
 
-    // 4. Fallar la segunda pregunta -> termina el juego (modoTiempo porPregunta)
+    // 4. Fallar la segunda pregunta (ni es la última) -> YA NO debe
+    //    terminar el juego, solo se marca mal y sigue con la tercera.
     const respuesta2 = await jsonFetch(`${BASE}/api/partidas/responder`, {
       method: 'POST',
       body: JSON.stringify({ sessionId, opcionSeleccionada: 'A' }),
     });
     assert(respuesta2.status === 200, `responder (2) responde 200 (fue ${respuesta2.status})`);
-    assert(respuesta2.cuerpo.juegoTerminado === true, 'fallar termina la partida en modo porPregunta');
-    assert(respuesta2.cuerpo.motivo === 'fallo', 'el motivo de fin es "fallo"');
-    assert(respuesta2.cuerpo.puntajeFinal === 1, 'el puntaje final quedó en 1 (acertó la primera)');
+    assert(respuesta2.cuerpo.esCorrecta === false, 'la segunda respuesta se marca incorrecta');
+    assert(respuesta2.cuerpo.juegoTerminado === false, 'fallar YA NO termina la partida: el juego sigue (es una prueba, no "Millonario")');
+    assert(!!respuesta2.cuerpo.siguientePregunta, 'el servidor manda la tercera pregunta para seguir');
 
-    // 5. Responder de nuevo tras terminar -> debe rechazar
+    // 5. Responder (bien) la tercera y última pregunta -> ahí sí termina,
+    //    con el desglose de correctas/incorrectas.
+    const respuesta3 = await jsonFetch(`${BASE}/api/partidas/responder`, {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, opcionSeleccionada: 'B' }),
+    });
+    assert(respuesta3.status === 200, `responder (3) responde 200 (fue ${respuesta3.status})`);
+    assert(respuesta3.cuerpo.juegoTerminado === true, 'la partida termina al acabarse las preguntas (no antes)');
+    assert(respuesta3.cuerpo.motivo === 'completado', `el motivo de fin es "completado" (fue "${respuesta3.cuerpo.motivo}")`);
+    assert(respuesta3.cuerpo.puntajeFinal === 2, 'el puntaje final quedó en 2 (acertó 1ª y 3ª, falló la 2ª)');
+    assert(respuesta3.cuerpo.totalPreguntas === 3, 'totalPreguntas sigue siendo 3');
+    assert(respuesta3.cuerpo.preguntasRespondidas === 3, 'preguntasRespondidas es 3 (las respondió todas)');
+
+    // 6. Responder de nuevo tras terminar -> debe rechazar
     const respuestaTrasFin = await jsonFetch(`${BASE}/api/partidas/responder`, {
       method: 'POST',
       body: JSON.stringify({ sessionId, opcionSeleccionada: 'B' }),
     });
     assert(respuestaTrasFin.status === 410, 'responder tras terminar la partida da error 410');
 
-    // 6. El resultado quedó guardado en la tabla resultados
+    // 7. El resultado quedó guardado en la tabla resultados como "completado"
+    //    (ya no existe el resultado "perdió": fallar una pregunta no corta la prueba).
     const { data: resultados } = await admin.from('resultados').select('*').eq('juego_id', juego.id);
     assert(resultados.length === 1, 'se guardó exactamente 1 resultado en la tabla resultados');
-    assert(resultados[0].resultado === 'perdió', 'el resultado guardado dice "perdió"');
+    assert(resultados[0].resultado === 'completado', `el resultado guardado dice "completado" (fue "${resultados[0].resultado}")`);
+    assert(resultados[0].puntaje === 2, 'el resultado guardado tiene puntaje 2');
+    assert(resultados[0].total_preguntas === 3, 'el resultado guardado tiene total_preguntas 3');
 
-    console.log('\n✅ Flujo individual completo verificado sin errores.');
+    console.log('\n✅ Flujo individual (formato prueba) completo verificado sin errores.');
   } finally {
     await admin.auth.admin.deleteUser(profesorId); // cascada: borra juego/preguntas/resultados de prueba
     console.log('Limpieza: usuario y datos de prueba eliminados.');

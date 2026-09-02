@@ -33,5 +33,9 @@ export async function POST(request) {
     .eq('session_id', sessionId);
   if (errorUpdate) return NextResponse.json({ error: errorUpdate.message }, { status: 500 });
 
-  return NextResponse.json({ puntajeFinal: estado.correctas, totalPreguntas: estado.preguntas.length });
+  return NextResponse.json({
+    puntajeFinal: estado.correctas,
+    totalPreguntas: estado.preguntas.length,
+    preguntasRespondidas: estado.pregunta_actual,
+  });
 }

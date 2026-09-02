@@ -68,9 +68,14 @@ export default function PantallaJuego({ datos, onTerminar }) {
         method: 'POST',
         body: JSON.stringify({ sessionId: datos.sessionId }),
       });
-      onTerminar({ motivo: 'tiempo', puntaje: resultado.puntajeFinal, total: resultado.totalPreguntas });
+      onTerminar({
+        motivo: 'tiempo',
+        puntaje: resultado.puntajeFinal,
+        total: resultado.totalPreguntas,
+        respondidas: resultado.preguntasRespondidas,
+      });
     } catch {
-      onTerminar({ motivo: 'tiempo', puntaje: 0, total: datos.totalPreguntas });
+      onTerminar({ motivo: 'tiempo', puntaje: 0, total: datos.totalPreguntas, respondidas: 0 });
     }
   }
 
@@ -175,7 +180,12 @@ export default function PantallaJuego({ datos, onTerminar }) {
     if (tiempoAgotadoRef.current) {
       finalizarPorTiempoAgotado();
     } else if (resultado.juegoTerminado) {
-      onTerminar({ motivo: resultado.motivo, puntaje: resultado.puntajeFinal, total: resultado.totalPreguntas });
+      onTerminar({
+        motivo: resultado.motivo,
+        puntaje: resultado.puntajeFinal,
+        total: resultado.totalPreguntas,
+        respondidas: resultado.preguntasRespondidas,
+      });
     } else {
       mostrarPregunta(resultado.siguientePregunta);
     }
@@ -250,7 +260,12 @@ export default function PantallaJuego({ datos, onTerminar }) {
         body: JSON.stringify({ sessionId: datos.sessionId }),
       });
       Sonido.retirada();
-      onTerminar({ motivo: 'retirado', puntaje: resultado.puntajeFinal, total: resultado.totalPreguntas });
+      onTerminar({
+        motivo: 'retirado',
+        puntaje: resultado.puntajeFinal,
+        total: resultado.totalPreguntas,
+        respondidas: resultado.preguntasRespondidas,
+      });
     } catch (err) {
       alert(`Ocurrió un error: ${err.message}`);
     }
